@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-inter: 'Inter', system-ui, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: #0A0A0A;
+    color: #F5F5F5;
+    font-family: var(--font-inter);
+  }
+
+  ::selection {
+    background-color: #FFE000;
+    color: #0A0A0A;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #111;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #FFE000;
+  }
+}
+
+@layer components {
+  .container-rs {
+    @apply max-w-7xl mx-auto px-6 lg:px-10;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-rs-yellow text-rs-black font-semibold
+           px-6 py-3 text-sm tracking-wide uppercase
+           hover:bg-white transition-colors duration-200;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center gap-2 border border-rs-border text-rs-white font-semibold
+           px-6 py-3 text-sm tracking-wide uppercase
+           hover:border-rs-yellow hover:text-rs-yellow transition-colors duration-200;
+  }
+
+  .section-label {
+    @apply text-rs-yellow text-xs font-semibold tracking-[0.2em] uppercase;
+  }
+
+  .divider {
+    @apply border-t border-rs-border;
+  }
+
+  .card-dark {
+    @apply bg-rs-dark border border-rs-border hover:border-rs-yellow/40
+           transition-colors duration-300;
+  }
+}
