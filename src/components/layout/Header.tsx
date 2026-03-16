@@ -1,96 +1,184 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useLanguage, useTranslation, LANGUAGES } from '@/lib/language'
+import type { TranslationKey } from '@/lib/i18n/translations'
 
-const NAV_LINKS = [
-  { href: '/broadcasts', label: 'Broadcasts' },
-  { href: '/events',     label: 'Events' },
-  { href: '/services',   label: 'Services' },
-  { href: '/calendar',   label: 'Calendar' },
-  { href: '/live',       label: 'Live', badge: true },
-  { href: '/news',       label: 'News' },
+const NAV_LINKS: { href: string; labelKey: TranslationKey; isLiveLink?: boolean }[] = [
+  { href: '/broadcasts', labelKey: 'nav.broadcasts' },
+  { href: '/calendar',   labelKey: 'nav.calendar' },
+  { href: '/events',     labelKey: 'nav.events' },
+  { href: '/services',   labelKey: 'nav.services' },
+  { href: '/news',       labelKey: 'nav.news' },
+  { href: '/live',       labelKey: 'nav.live', isLiveLink: true },
 ]
 
-export function Header() {
-  const [scrolled, setScrolled]   = useState(false)
-  const [menuOpen, setMenuOpen]   = useState(false)
+interface HeaderProps {
+  isLive?: boolean
+}
+
+export function Header({ isLive = false }: HeaderProps) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [langOpen, setLangOpen] = useState(false)
+  const langRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
+  const { lang, setLang } = useLanguage()
+  const t = useTranslation()
+
+  const currentLang = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0]
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    setMenuOpen(false)
+    setLangOpen(false)
+  }, [pathname])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-rs-black/95 backdrop-blur-sm border-b border-rs-border' : 'bg-transparent'
-      }`}
-    >
-      <div className="container-rs flex items-center justify-between h-16">
+    <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-rs-black/[0.97] backdrop-blur-[10px] border-b border-rs-border">
+      <div className="container-rs flex items-center justify-between h-full">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span className="text-rs-yellow font-bold text-xl tracking-tight">RACESPOT</span>
-          <span className="text-rs-muted text-xs font-mono mt-0.5">.tv</span>
+        <Link href="/" className="flex items-center shrink-0">
+          <Image
+            src="/images/logos/racespot-white.png"
+            alt="Racespot"
+            width={160}
+            height={15}
+            className="h-[15px] w-auto"
+            priority
+          />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map(({ href, label, badge }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-1.5 text-sm text-rs-muted hover:text-rs-white transition-colors duration-150"
-            >
-              {badge && (
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              )}
-              {label}
-            </Link>
-          ))}
+        <nav className="hidden lg:flex items-center gap-1">
+          {NAV_LINKS.map(({ href, labelKey, isLiveLink }) => {
+            const isActive = pathname.startsWith(href)
+            const showLiveIndicator = isLiveLink && isLive
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`relative flex items-center gap-1.5 px-3 py-2
+                  font-display font-semibold text-[13px] tracking-[0.08em] uppercase
+                  transition-colors duration-200
+                  ${showLiveIndicator ? 'text-rs-live' : isActive ? 'text-white' : 'text-rs-muted hover:text-white'}
+                `}
+              >
+                {showLiveIndicator && (
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rs-live opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rs-live" />
+                  </span>
+                )}
+                {t(labelKey)}
+                {isActive && !showLiveIndicator && (
+                  <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-rs-yellow" />
+                )}
+              </Link>
+            )
+          })}
         </nav>
 
-        {/* CTA */}
-        <div className="hidden md:flex items-center gap-4">
-          <Link href="/de" className="text-xs text-rs-muted hover:text-rs-yellow transition-colors">
-            DE
-          </Link>
-          <Link href="/contact" className="btn-primary text-xs px-4 py-2">
-            Get in touch
+        {/* Right side: lang dropdown + CTA */}
+        <div className="hidden lg:flex items-center gap-4">
+          <div ref={langRef} className="relative">
+            <button
+              onClick={() => setLangOpen(!langOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-rs-border rounded-rs text-[11px] font-display font-semibold uppercase tracking-wider text-white hover:border-rs-yellow/50 transition-colors"
+            >
+              <span>{currentLang.flag}</span>
+              <span>{currentLang.code.toUpperCase()}</span>
+              <svg width="8" height="5" viewBox="0 0 8 5" fill="currentColor" className={`ml-0.5 transition-transform ${langOpen ? 'rotate-180' : ''}`}>
+                <path d="M4 5L0 0h8L4 5z" />
+              </svg>
+            </button>
+            {langOpen && (
+              <div className="absolute top-full right-0 mt-1 bg-rs-dark border border-rs-border rounded-rs overflow-hidden shadow-xl min-w-[140px] z-50">
+                {LANGUAGES.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => { setLang(l.code); setLangOpen(false) }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-[12px] font-display uppercase tracking-wider transition-colors
+                      ${l.code === lang ? 'bg-rs-yellow/10 text-rs-yellow' : 'text-rs-muted hover:text-white hover:bg-rs-gray'}`}
+                  >
+                    <span>{l.flag}</span>
+                    <span>{l.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <Link href="/contact" className="btn-primary btn-sm">
+            {t('nav.getQuote')}
           </Link>
         </div>
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden flex flex-col gap-1.5 p-2"
+          className="lg:hidden flex flex-col gap-1.5 p-2"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
         >
-          <span className={`block w-5 h-px bg-rs-white transition-transform duration-200 ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-          <span className={`block w-5 h-px bg-rs-white transition-opacity duration-200 ${menuOpen ? 'opacity-0' : ''}`} />
-          <span className={`block w-5 h-px bg-rs-white transition-transform duration-200 ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+          <span className={`block w-5 h-px bg-white transition-transform duration-200 ${menuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
+          <span className={`block w-5 h-px bg-white transition-opacity duration-200 ${menuOpen ? 'opacity-0' : ''}`} />
+          <span className={`block w-5 h-px bg-white transition-transform duration-200 ${menuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
         </button>
       </div>
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden bg-rs-dark border-t border-rs-border">
-          <nav className="container-rs py-6 flex flex-col gap-4">
-            {NAV_LINKS.map(({ href, label, badge }) => (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 text-rs-white text-base font-medium"
-              >
-                {badge && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
-                {label}
-              </Link>
-            ))}
-            <Link href="/contact" className="btn-primary mt-2 self-start">
-              Get in touch
-            </Link>
+        <div className="lg:hidden bg-rs-dark border-t border-rs-border">
+          <nav className="container-rs py-6 flex flex-col gap-1">
+            {NAV_LINKS.map(({ href, labelKey, isLiveLink }) => {
+              const isActive = pathname.startsWith(href)
+              const showLiveIndicator = isLiveLink && isLive
+
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center gap-2 px-3 py-3 rounded-rs
+                    font-display font-semibold text-[15px] tracking-[0.06em] uppercase
+                    ${showLiveIndicator ? 'text-rs-live' : isActive ? 'text-white bg-rs-gray' : 'text-rs-muted'}
+                  `}
+                >
+                  {showLiveIndicator && <span className="w-2 h-2 rounded-full bg-rs-live animate-pulse-live" />}
+                  {t(labelKey)}
+                </Link>
+              )
+            })}
+            <div className="mt-4 pt-4 border-t border-rs-border space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {LANGUAGES.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => setLang(l.code)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-rs text-[11px] font-display font-semibold uppercase tracking-wider border transition-colors
+                      ${l.code === lang
+                        ? 'bg-rs-yellow text-rs-black border-rs-yellow'
+                        : 'text-rs-muted border-rs-border hover:text-white'}`}
+                  >
+                    <span>{l.flag}</span>
+                    {l.code.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <Link href="/contact" className="btn-primary btn-sm block text-center">{t('nav.getQuote')}</Link>
+            </div>
           </nav>
         </div>
       )}

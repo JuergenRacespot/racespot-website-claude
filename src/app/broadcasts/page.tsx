@@ -1,76 +1,165 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import { getCompletedBroadcasts, getChannelPlaylists, type YouTubePlaylist } from '@/lib/youtube'
+import { getSeriesTiers } from '@/lib/sheets'
+import { VideoCard } from '@/components/ui/VideoCard'
+import { BroadcastsClient, type PlaylistWithMeta } from '@/components/sections/BroadcastsClient'
+import { T } from '@/components/ui/T'
+
+/* Refresh video data every 5 minutes */
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Broadcasts',
   description: 'Portfolio of 400+ live sim racing broadcasts per year across all major platforms.',
 }
 
-const CATEGORIES = ['All', 'iRacing', 'Assetto Corsa', 'rFactor 2', 'TV Production', 'Esports']
+/** Strip year patterns, season numbers, and normalize for tier matching */
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\b(20\d{2})\b/g, '')       // strip years like 2024, 2025, 2026
+    .replace(/\bseason\s*\d+\b/gi, '')    // strip "Season 12"
+    .replace(/\bs\d+\b/gi, '')            // strip "S12"
+    .replace(/[^a-z0-9\s]/g, '')          // strip special chars
+    .replace(/\s+/g, ' ')                 // collapse whitespace
+    .trim()
+}
 
-// Placeholder — replace with YouTube API fetch
-const BROADCASTS = Array.from({ length: 12 }, (_, i) => ({
-  id: `video-${i}`,
-  youtubeId: 'dQw4w9WgXcQ',
-  title: `Broadcast Event ${i + 1} — Full Coverage`,
-  category: CATEGORIES[1 + (i % (CATEGORIES.length - 1))],
-  date: '2026-03-01',
-  views: `${Math.floor(Math.random() * 500 + 50)}K`,
-}))
+/**
+ * Extract a "series family" from a playlist title.
+ * E.g. "Radical E-Cup 2025 Season 4" → "Radical E-Cup"
+ *      "World GT Championship Season 18" → "World GT Championship"
+ *      "Porsche Esports Carrera Cup GB 2026" → "Porsche Esports Carrera Cup GB"
+ */
+function extractFamily(title: string): string {
+  return title
+    .replace(/\b20\d{2}\b/g, '')          // strip years
+    .replace(/\bseason\s*\d+\b/gi, '')    // strip "Season 12"
+    .replace(/\bs\d+\b/gi, '')            // strip "S12"
+    .replace(/\|/g, ' ')                  // pipes to spaces
+    .replace(/\s+/g, ' ')                 // collapse whitespace
+    .trim()
+}
 
-export default function BroadcastsPage() {
+/** Match playlist to best tier from series data */
+function matchPlaylistTier(
+  playlist: YouTubePlaylist,
+  seriesTiers: { series: string; tier: number }[],
+): number {
+  const normTitle = normalize(playlist.title)
+  let bestTier = 99
+
+  for (const { series, tier } of seriesTiers) {
+    const normSeries = normalize(series)
+    if (normTitle.includes(normSeries) || normSeries.includes(normTitle)) {
+      if (tier < bestTier) bestTier = tier
+    }
+  }
+
+  return bestTier
+}
+
+export default async function BroadcastsPage() {
+  const [broadcasts, playlists, seriesTiers] = await Promise.all([
+    getCompletedBroadcasts(6),
+    getChannelPlaylists(50),
+    getSeriesTiers(),
+  ])
+
+  // Assign tier + family to each playlist
+  const enriched: PlaylistWithMeta[] = playlists.map((p) => ({
+    ...p,
+    tier: matchPlaylistTier(p, seriesTiers),
+    family: extractFamily(p.title),
+    isPrimary: false, // will be set below
+  }))
+
+  // Sort by tier (best first), then newest first within same tier
+  enriched.sort((a, b) => {
+    if (a.tier !== b.tier) return a.tier - b.tier
+    // Newer published date first
+    return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  })
+
+  // Mark the first (newest) playlist per family as primary
+  const seenFamilies = new Set<string>()
+  for (const p of enriched) {
+    const key = p.family.toLowerCase()
+    if (!seenFamilies.has(key)) {
+      p.isPrimary = true
+      seenFamilies.add(key)
+    }
+  }
+
+  // Build unique family list (sorted by best tier of that family)
+  const familyTierMap = new Map<string, number>()
+  for (const p of enriched) {
+    const key = p.family
+    const existing = familyTierMap.get(key)
+    if (existing === undefined || p.tier < existing) {
+      familyTierMap.set(key, p.tier)
+    }
+  }
+  const families = Array.from(familyTierMap.entries())
+    .sort((a, b) => a[1] - b[1])
+    .map(([name]) => name)
+
   return (
-    <div className="pt-24">
+    <div>
+      {/* Hero Banner */}
+      <div className="relative h-[300px] md:h-[400px] overflow-hidden">
+        <Image
+          src="/images/setup/WhatsApp Image 2026-03-13 at 09.43.42.jpeg"
+          alt="Racespot broadcast control room with multiple monitors"
+          fill
+          className="object-cover object-[center_35%]"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-rs-black via-rs-black/60 to-rs-black/20" />
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-rs-yellow via-rs-yellow/50 to-transparent" />
+        <div className="container-rs relative h-full flex items-end pb-10">
+          <div>
+            <p className="section-label mb-3"><T k="broadcastsPage.label" /></p>
+            <h1 className="display-title"><T k="broadcastsPage.title" /></h1>
+          </div>
+        </div>
+      </div>
+
       <div className="container-rs py-16">
-        <p className="section-label mb-3">Portfolio</p>
-        <h1 className="text-headline font-bold text-rs-white mb-4">Broadcasts</h1>
-        <p className="text-rs-muted max-w-xl mb-12">
-          Over 400 live events per year across iRacing, Assetto Corsa, rFactor 2, and more —
-          streamed online and produced for TV.
+        <p className="text-rs-muted max-w-xl mb-16">
+          <T k="broadcastsPage.intro" />
         </p>
 
-        {/* Filter tabs */}
-        <div className="flex flex-wrap gap-2 mb-10">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              className={`text-xs px-4 py-2 border transition-colors ${
-                cat === 'All'
-                  ? 'border-rs-yellow text-rs-yellow'
-                  : 'border-rs-border text-rs-muted hover:border-rs-yellow/50 hover:text-rs-white'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+        {/* Latest Broadcasts section */}
+        <div className="mb-20">
+          <div className="section-header">
+            <div>
+              <p className="section-label mb-2"><T k="broadcasts.recentCoverage" /></p>
+              <h2 className="section-title"><T k="broadcasts.latestBroadcasts" /></h2>
+            </div>
+          </div>
+
+          {broadcasts.length > 0 ? (
+            <div className="card-grid card-grid--3">
+              {broadcasts.map((video) => (
+                <VideoCard key={video.id} video={video} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 border border-rs-border rounded-rs">
+              <p className="text-rs-muted text-sm">
+                <T k="broadcasts.noBroadcasts" />
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {BROADCASTS.map((b) => (
-            <article key={b.id} className="group card-dark">
-              <div className="relative aspect-video overflow-hidden">
-                <Image
-                  src={`https://img.youtube.com/vi/${b.youtubeId}/mqdefault.jpg`}
-                  alt={b.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-rs-black/30 group-hover:bg-rs-black/10 transition-colors" />
-                <span className="absolute top-2 left-2 bg-rs-black/80 text-rs-yellow text-xs font-mono px-2 py-0.5">
-                  {b.category}
-                </span>
-                <span className="absolute bottom-2 right-2 text-rs-white/70 text-xs">{b.views} views</span>
-              </div>
-              <div className="p-4">
-                <p className="text-rs-white text-sm font-medium leading-snug mb-1 group-hover:text-rs-yellow transition-colors">
-                  {b.title}
-                </p>
-                <p className="text-rs-muted text-xs">{b.date}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+        {/* Divider */}
+        <div className="divider mb-20" />
+
+        {/* Playlists section */}
+        <BroadcastsClient playlists={enriched} families={families} />
       </div>
     </div>
   )

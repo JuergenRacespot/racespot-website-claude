@@ -1,83 +1,83 @@
-import Link from 'next/link'
+'use client'
 
-const SERVICES = [
+import Image from 'next/image'
+import Link from 'next/link'
+import { useTranslation } from '@/lib/language'
+import type { TranslationKey } from '@/lib/i18n/translations'
+
+const SERVICES: { number: string; titleKey: TranslationKey; taglineKey: TranslationKey; image: string }[] = [
   {
-    id: 'broadcast',
-    label: '01',
-    title: 'Broadcast Production',
-    description:
-      'Full-service live production for online and TV. 200+ events per year across iRacing, Assetto Corsa, rFactor, and more. TV-ready output for Eurosport, Sport 1, and MotorsTV.',
-    features: ['Multi-language commentary', 'TV network partnerships', 'Custom graphics packages', 'VOD production'],
-    href: '/broadcasts',
+    number: '01',
+    titleKey: 'services.broadcast.title',
+    taglineKey: 'services.broadcast.tagline',
+    image: '/images/setup/WhatsApp Image 2026-03-13 at 09.43.42.jpeg',
   },
   {
-    id: 'events',
-    label: '02',
-    title: 'Live Events',
-    description:
-      'End-to-end event management for sim racing live events. We handle the full logistics — from hardware setup to audio/visual broadcast infrastructure.',
-    features: ['On-site AV setup', 'Hardware provisioning', 'Broadcast logistics', 'Event management'],
-    href: '/events',
+    number: '02',
+    titleKey: 'services.events.title',
+    taglineKey: 'services.events.tagline',
+    image: '/images/events-banner.jpg',
   },
   {
-    id: 'studio',
-    label: '03',
-    title: 'Studio Shows',
-    description:
-      'Our modular studio in Cologne is fully equipped for your next production. Adaptable to any format — panel shows, product launches, corporate content.',
-    features: ['Cologne studio', 'Modular setup', 'Green screen available', 'Full AV crew'],
-    href: '/services',
+    number: '03',
+    titleKey: 'services.studio.title',
+    taglineKey: 'services.studio.tagline',
+    image: '/images/studio-banner.jpg',
+  },
+  {
+    number: '04',
+    titleKey: 'services.hardware.title',
+    taglineKey: 'services.hardware.tagline',
+    image: '/images/hardware-banner.jpg',
   },
 ]
 
 export function Services() {
+  const t = useTranslation()
+
   return (
-    <section className="py-24">
+    <section className="section section--alt">
       <div className="container-rs">
-        <div className="flex items-end justify-between mb-16">
+        <div className="section-header">
           <div>
-            <p className="section-label mb-3">What we do</p>
-            <h2 className="text-headline font-bold text-rs-white">
-              Three pillars,<br />one team
-            </h2>
+            <p className="section-label mb-2">{t('services.label')}</p>
+            <h2 className="section-title">{t('services.title')}</h2>
           </div>
-          <Link href="/services" className="hidden sm:flex btn-outline text-xs">
-            All services
+          <Link href="/services" className="btn-ghost hidden sm:flex">
+            {t('services.viewAll')}
           </Link>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-px bg-rs-border">
+        <div className="grid md:grid-cols-2 gap-4">
           {SERVICES.map((s) => (
-            <div key={s.id} className="bg-rs-black p-8 group hover:bg-rs-dark transition-colors duration-300">
-              <span className="text-rs-border text-xs font-mono group-hover:text-rs-yellow/50 transition-colors">
-                {s.label}
-              </span>
-
-              <h3 className="text-rs-white text-xl font-semibold mt-4 mb-3 group-hover:text-rs-yellow transition-colors duration-300">
-                {s.title}
-              </h3>
-
-              <p className="text-rs-muted text-sm leading-relaxed mb-6">
-                {s.description}
-              </p>
-
-              <ul className="space-y-2 mb-8">
-                {s.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-xs text-rs-muted">
-                    <span className="w-1 h-1 rounded-full bg-rs-yellow shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                href={s.href}
-                className="text-xs text-rs-yellow font-medium tracking-wide uppercase hover:underline"
-              >
-                Learn more →
-              </Link>
-            </div>
+            <Link
+              key={s.number}
+              href="/services"
+              className="group relative aspect-[16/9] rounded-rs overflow-hidden border border-rs-border hover:border-rs-yellow/50 transition-colors"
+            >
+              <Image
+                src={s.image}
+                alt={t(s.titleKey)}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-rs-black via-rs-black/50 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                <span className="text-rs-yellow/40 font-mono text-xs">{s.number}</span>
+                <h3 className="font-display font-bold text-xl md:text-2xl uppercase text-white group-hover:text-rs-yellow transition-colors">
+                  {t(s.titleKey)}
+                </h3>
+                <p className="text-white/60 text-sm mt-1">{t(s.taglineKey)}</p>
+              </div>
+            </Link>
           ))}
+        </div>
+
+        <div className="mt-6 sm:hidden">
+          <Link href="/services" className="btn-ghost">
+            {t('services.viewAll')}
+          </Link>
         </div>
       </div>
     </section>

@@ -1,0 +1,543 @@
+'use client'
+
+import { useState, useMemo, useEffect } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import type { CalendarEvent } from '@/lib/sheets'
+import { useTranslation } from '@/lib/language'
+
+const LIVE_PAGE = '/live'
+
+// ─── Locale-aware time hook ─────────────────────────────────
+
+function useIs24Hour(): boolean {
+  const [is24h, setIs24h] = useState(true)
+
+  useEffect(() => {
+    try {
+      const locale = navigator.language || 'en'
+      if (locale.startsWith('de')) { setIs24h(true); return }
+      const resolved = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions()
+      setIs24h(!resolved.hour12)
+    } catch {
+      setIs24h(false)
+    }
+  }, [])
+
+  return is24h
+}
+
+// ─── Helpers ────────────────────────────────────────────────
+
+function localDate(iso: string) {
+  return new Date(iso)
+}
+
+function formatTime(iso: string, is24h: boolean): string {
+  const d = localDate(iso)
+  try {
+    const locale = typeof navigator !== 'undefined' ? navigator.language : 'en'
+    return d.toLocaleTimeString(locale, {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: !is24h,
+    })
+  } catch {
+    const h = d.getHours()
+    const m = String(d.getMinutes()).padStart(2, '0')
+    if (is24h) return `${String(h).padStart(2, '0')}:${m}`
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    return `${h % 12 || 12}:${m} ${ampm}`
+  }
+}
+
+function formatWeekday(iso: string): string {
+  return localDate(iso).toLocaleDateString([], { weekday: 'short' })
+}
+
+function getMonthKey(iso: string): string {
+  const d = localDate(iso)
+  return `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`
+}
+
+function getMonthLabel(key: string): string {
+  const [year, month] = key.split('-').map(Number)
+  const d = new Date(year, month, 1)
+  return d.toLocaleDateString([], { month: 'long', year: 'numeric' })
+}
+
+function getUserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone
+  } catch {
+    return 'UTC'
+  }
+}
+
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate()
+}
+
+function getFirstDayOfWeek(year: number, month: number): number {
+  return new Date(year, month, 1).getDay()
+}
+
+// ─── Shared Components ──────────────────────────────────────
+
+function LiveBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 bg-rs-live text-white text-[10px] font-bold uppercase px-1.5 py-0.5 rounded">
+      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-live" />
+      LIVE
+    </span>
+  )
+}
+
+// ─── List View ──────────────────────────────────────────────
+
+function ListView({ events, year, month, is24h }: { events: CalendarEvent[]; year: number; month: number; is24h: boolean }) {
+  const monthEvents = useMemo(() => {
+    return events.filter((e) => {
+      const d = localDate(e.dateISO)
+      return d.getFullYear() === year && d.getMonth() === month
+    })
+  }, [events, year, month])
+
+  if (monthEvents.length === 0) return <EmptyState />
+
+  return (
+    <div>
+      <div className="flex items-baseline gap-3 mb-4 pb-3 border-b border-rs-border">
+        <span className="text-rs-muted text-[11px]">
+          {monthEvents.length} event{monthEvents.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+      <div>
+        {monthEvents.map(event => (
+          <EventRow key={event.id} event={event} is24h={is24h} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function EventRow({ event, is24h }: { event: CalendarEvent; is24h: boolean }) {
+  const d = localDate(event.dateISO)
+  const day = d.getDate()
+  const weekday = formatWeekday(event.dateISO)
+  const monthStr = d.toLocaleDateString([], { month: 'short' })
+
+  return (
+    <a
+      href={LIVE_PAGE}
+      className="group grid grid-cols-[56px_1fr_auto] md:grid-cols-[64px_1fr_auto] gap-4 py-4 px-3 -mx-3
+                 hover:bg-rs-dark/60 transition-colors border-b border-rs-border/30 cursor-pointer"
+    >
+      <div className="flex flex-col items-center justify-center text-center">
+        <span className="text-[10px] uppercase text-rs-muted font-medium leading-none">{weekday}</span>
+        <span className="text-xl font-display font-bold text-rs-white leading-tight">{day}</span>
+        <span className="text-[10px] uppercase text-rs-muted leading-none">{monthStr}</span>
+      </div>
+      <div className="min-w-0 flex flex-col justify-center">
+        <div className="flex items-center gap-2 flex-wrap">
+          {event.isLive && <LiveBadge />}
+          <p className="text-rs-white font-medium text-sm truncate group-hover:text-rs-yellow transition-colors">
+            {event.series}
+          </p>
+        </div>
+        {event.description && (
+          <p className="text-rs-muted text-xs mt-0.5 truncate">{event.description}</p>
+        )}
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className="text-[11px] text-rs-yellow font-bold">{formatTime(event.dateISO, is24h)}</span>
+          <span className="text-[10px] text-rs-muted/50">–</span>
+          <span className="text-[11px] text-rs-muted">{formatTime(event.endDateISO, is24h)}</span>
+        </div>
+      </div>
+      <div className="flex items-center">
+        <span className="text-xs text-rs-yellow font-display font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+          Watch →
+        </span>
+      </div>
+    </a>
+  )
+}
+
+// ─── Calendar Grid View ─────────────────────────────────────
+
+function CalendarGridView({
+  events,
+  year,
+  month,
+  is24h,
+}: {
+  events: CalendarEvent[]
+  year: number
+  month: number
+  is24h: boolean
+}) {
+  const eventsByDay = useMemo(() => {
+    const map = new Map<number, CalendarEvent[]>()
+    for (const e of events) {
+      const d = localDate(e.dateISO)
+      if (d.getFullYear() === year && d.getMonth() === month) {
+        const day = d.getDate()
+        if (!map.has(day)) map.set(day, [])
+        map.get(day)!.push(e)
+      }
+    }
+    // Sort each day's events by tier (1 = highest priority, shown first)
+    map.forEach((dayEvents) => {
+      dayEvents.sort((a, b) => a.tier - b.tier)
+    })
+    return map
+  }, [events, year, month])
+
+  const daysInMonth = getDaysInMonth(year, month)
+  const firstDay = getFirstDayOfWeek(year, month)
+  const today = new Date()
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month
+  const todayDate = today.getDate()
+
+  const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+  const cells: (number | null)[] = []
+  for (let i = 0; i < firstDay; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  return (
+    <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+      <div className="min-w-[700px]">
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {WEEKDAYS.map(wd => (
+            <div key={wd} className="text-center text-xs text-rs-muted uppercase tracking-wider py-2 font-medium">
+              {wd}
+            </div>
+          ))}
+        </div>
+
+        {/* Day grid — auto-rows ensures every row has equal height */}
+        <div className="grid grid-cols-7 gap-1 auto-rows-fr">
+          {cells.map((day, i) => {
+            if (day === null) {
+              return <div key={`empty-${i}`} className="min-h-[150px] md:min-h-[170px] lg:min-h-[190px] bg-rs-dark/20 rounded-rs" />
+            }
+
+            const dayEvents = eventsByDay.get(day) || []
+            const isToday = isCurrentMonth && day === todayDate
+
+            return (
+              <DayCell
+                key={day}
+                day={day}
+                events={dayEvents}
+                isToday={isToday}
+                is24h={is24h}
+              />
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Day Cell with Carousel ─────────────────────────────────
+
+function DayCell({
+  day,
+  events,
+  isToday,
+  is24h,
+}: {
+  day: number
+  events: CalendarEvent[]
+  isToday: boolean
+  is24h: boolean
+}) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const hasEvents = events.length > 0
+  const hasMultiple = events.length > 1
+
+  // Reset index when events change
+  useEffect(() => {
+    setActiveIndex(0)
+  }, [events.length])
+
+  return (
+    <div
+      className={`min-h-[150px] md:min-h-[170px] lg:min-h-[190px] p-2 md:p-3 rounded-rs flex flex-col transition-colors
+        ${isToday
+          ? 'bg-rs-yellow/10 border border-rs-yellow/30'
+          : 'bg-rs-dark/30 border border-transparent'
+        }
+        ${hasEvents ? 'hover:border-rs-border/60' : ''}`}
+    >
+      {/* Day number row — fixed h-6 so today-badge and plain number take same space */}
+      <div className="flex items-center justify-between mb-1.5 h-6">
+        <div className="flex items-center gap-1.5">
+          {isToday ? (
+            <span className="w-6 h-6 flex items-center justify-center rounded-full bg-rs-yellow text-rs-black text-xs font-bold">
+              {day}
+            </span>
+          ) : (
+            <span className="text-sm font-medium text-rs-muted leading-6">{day}</span>
+          )}
+          {hasMultiple && (
+            <span className="text-[10px] text-rs-yellow bg-rs-yellow/10 px-1.5 py-0.5 rounded font-bold">
+              {events.length}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Event card area — always uses flex-1 so card + nav fill the same space */}
+      {hasEvents && (
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* Card with animation */}
+          <div className="flex-1 relative overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeIndex}
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.15 }}
+                className="h-full"
+              >
+                <EventCard event={events[activeIndex]} is24h={is24h} />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Carousel navigation — ALWAYS rendered with same height to keep cards aligned.
+              For single-event days, the row is invisible but still occupies space. */}
+          <div className={`flex items-center justify-between mt-1.5 pt-1.5 h-7
+            ${hasMultiple ? 'border-t border-rs-border/20' : ''}`}
+          >
+            {hasMultiple ? (
+              <>
+                {/* Prev arrow (desktop only) */}
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveIndex(i => Math.max(0, i - 1)) }}
+                  disabled={activeIndex === 0}
+                  className="hidden md:flex w-5 h-5 items-center justify-center text-rs-muted hover:text-rs-yellow disabled:opacity-20 transition-colors"
+                  aria-label="Previous event"
+                >
+                  ‹
+                </button>
+
+                {/* Dots */}
+                <div className="flex items-center gap-1.5 mx-auto md:mx-0">
+                  {events.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveIndex(idx) }}
+                      className={`rounded-full transition-colors p-0.5
+                        ${idx === activeIndex
+                          ? 'bg-rs-yellow w-2 h-2'
+                          : 'bg-rs-muted/30 hover:bg-rs-muted/60 w-1.5 h-1.5'}`}
+                      aria-label={`Event ${idx + 1} of ${events.length}`}
+                    />
+                  ))}
+                </div>
+
+                {/* Next arrow (desktop only) */}
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveIndex(i => Math.min(events.length - 1, i + 1)) }}
+                  disabled={activeIndex === events.length - 1}
+                  className="hidden md:flex w-5 h-5 items-center justify-center text-rs-muted hover:text-rs-yellow disabled:opacity-20 transition-colors"
+                  aria-label="Next event"
+                >
+                  ›
+                </button>
+              </>
+            ) : (
+              /* Invisible spacer — same height as the dots row */
+              <span aria-hidden="true" />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Event Card (for calendar grid) ─────────────────────────
+
+function EventCard({ event, is24h }: { event: CalendarEvent; is24h: boolean }) {
+  return (
+    <a
+      href={LIVE_PAGE}
+      className="group flex flex-col justify-center h-full rounded-rs bg-rs-dark/60 border border-rs-border/40
+                 p-2 md:p-2.5 hover:border-rs-yellow/40 hover:bg-rs-dark transition-colors cursor-pointer"
+    >
+      {/* Live badge */}
+      {event.isLive && (
+        <div className="mb-1">
+          <LiveBadge />
+        </div>
+      )}
+
+      {/* Series title — prominent */}
+      <p className="font-display font-bold text-[10px] md:text-[11px] lg:text-[12px] leading-tight text-white
+                    group-hover:text-rs-yellow transition-colors line-clamp-2 lg:line-clamp-3 uppercase">
+        {event.series}
+      </p>
+
+      {/* Description */}
+      {event.description && (
+        <p className="text-[10px] md:text-[11px] text-rs-muted mt-0.5 line-clamp-1">
+          {event.description}
+        </p>
+      )}
+
+      {/* Start time */}
+      <div className="mt-auto pt-1">
+        <span className="text-[10px] md:text-[11px] text-rs-yellow font-bold whitespace-nowrap">
+          {formatTime(event.dateISO, is24h)}
+        </span>
+      </div>
+    </a>
+  )
+}
+
+// ─── Empty state ────────────────────────────────────────────
+
+function EmptyState() {
+  const t = useTranslation()
+  return (
+    <div className="text-center py-20">
+      <div className="text-4xl mb-4">📅</div>
+      <h3 className="text-rs-white font-display text-lg mb-2">{t('calendar.noEvents')}</h3>
+      <p className="text-rs-muted text-sm max-w-md mx-auto">
+        {t('calendar.noEventsDesc')}
+      </p>
+    </div>
+  )
+}
+
+// ─── Main Calendar Component ────────────────────────────────
+
+type ViewMode = 'list' | 'calendar'
+
+export function CalendarClient({ events }: { events: CalendarEvent[] }) {
+  const [viewMode, setViewMode] = useState<ViewMode>('calendar')
+  const now = new Date()
+  const [calYear, setCalYear] = useState(now.getFullYear())
+  const [calMonth, setCalMonth] = useState(now.getMonth())
+  const timezone = getUserTimezone()
+  const is24h = useIs24Hour()
+  const t = useTranslation()
+
+  const liveEvents = useMemo(() => events.filter(e => e.isLive), [events])
+
+  function prevMonth() {
+    if (calMonth === 0) {
+      setCalMonth(11)
+      setCalYear(y => y - 1)
+    } else {
+      setCalMonth(m => m - 1)
+    }
+  }
+  function nextMonth() {
+    if (calMonth === 11) {
+      setCalMonth(0)
+      setCalYear(y => y + 1)
+    } else {
+      setCalMonth(m => m + 1)
+    }
+  }
+
+  const calMonthLabel = new Date(calYear, calMonth, 1).toLocaleDateString([], {
+    month: 'long',
+    year: 'numeric',
+  })
+
+  return (
+    <div>
+      {/* Live Now banner */}
+      {liveEvents.length > 0 && (
+        <div className="mb-8 p-4 rounded-rs border border-rs-live/30 bg-rs-live/5">
+          <div className="flex items-center gap-2 mb-2">
+            <LiveBadge />
+            <span className="text-xs text-rs-muted">
+              {liveEvents.length} {t('calendar.liveNow')}
+            </span>
+          </div>
+          {liveEvents.map(e => (
+            <a
+              key={e.id}
+              href={LIVE_PAGE}
+              className="flex items-center justify-between py-1.5 hover:text-rs-yellow transition-colors"
+            >
+              <span className="text-rs-white text-sm font-medium">{e.series}</span>
+              <span className="text-xs text-rs-yellow font-display font-bold uppercase">{t('calendar.watch')}</span>
+            </a>
+          ))}
+        </div>
+      )}
+
+      {/* Controls bar */}
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+        {/* View toggle */}
+        <div className="flex items-center bg-rs-dark border border-rs-border rounded-rs overflow-hidden">
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={`px-4 py-2 text-xs font-display font-bold uppercase tracking-wider transition-colors
+              ${viewMode === 'calendar' ? 'bg-rs-yellow text-rs-black' : 'text-rs-muted hover:text-white'}`}
+          >
+            {t('calendar.calendarView')}
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`px-4 py-2 text-xs font-display font-bold uppercase tracking-wider transition-colors
+              ${viewMode === 'list' ? 'bg-rs-yellow text-rs-black' : 'text-rs-muted hover:text-white'}`}
+          >
+            {t('calendar.listView')}
+          </button>
+        </div>
+
+        {/* Month nav — always visible for both views */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={prevMonth}
+            className="w-8 h-8 flex items-center justify-center rounded-rs border border-rs-border text-rs-muted hover:text-white hover:border-rs-yellow transition-colors"
+          >
+            ←
+          </button>
+          <span className="text-sm font-display font-bold text-white min-w-[140px] text-center">
+            {calMonthLabel}
+          </span>
+          <button
+            onClick={nextMonth}
+            className="w-8 h-8 flex items-center justify-center rounded-rs border border-rs-border text-rs-muted hover:text-white hover:border-rs-yellow transition-colors"
+          >
+            →
+          </button>
+        </div>
+
+        {/* Timezone indicator */}
+        <div className="text-[11px] text-rs-muted">
+          🕐 {timezone.replace(/_/g, ' ')}
+        </div>
+      </div>
+
+      {/* View content */}
+      {viewMode === 'list' ? (
+        <ListView events={events} year={calYear} month={calMonth} is24h={is24h} />
+      ) : (
+        <CalendarGridView events={events} year={calYear} month={calMonth} is24h={is24h} />
+      )}
+
+      {/* Footer */}
+      {events.length > 0 && (
+        <div className="mt-10 pt-5 border-t border-rs-border">
+          <p className="text-rs-muted text-xs text-center">
+            {t('calendar.timezoneNote')} ({timezone.replace(/_/g, ' ')})
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}

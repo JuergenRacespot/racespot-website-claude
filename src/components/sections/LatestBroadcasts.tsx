@@ -1,59 +1,104 @@
-import Image from 'next/image'
 import Link from 'next/link'
+import {
+  getCompletedBroadcasts,
+  getLiveStream,
+  formatViewCount,
+} from '@/lib/youtube'
+import { VideoCard } from '@/components/ui/VideoCard'
+import { T } from '@/components/ui/T'
 
-// In production: fetched from YouTube Data API v3
-const PLACEHOLDER_VIDEOS = [
-  { id: 'dQw4w9WgXcQ', title: '24h Le Mans Virtual 2026 — Full Race Broadcast', date: '2026-02-14', category: 'iRacing' },
-  { id: 'dQw4w9WgXcQ', title: 'iRacing World Championship — Round 3 Highlights', date: '2026-02-07', category: 'iRacing' },
-  { id: 'dQw4w9WgXcQ', title: 'Porsche Sim Racing Summit 2026 — Live Coverage', date: '2026-01-28', category: 'Esports' },
-  { id: 'dQw4w9WgXcQ', title: 'Assetto Corsa EVO World Series — Season Opener', date: '2026-01-15', category: 'AC EVO' },
-]
+export async function LatestBroadcasts() {
+  const [videos, liveStream] = await Promise.all([
+    getCompletedBroadcasts(3),
+    getLiveStream(),
+  ])
 
-export function LatestBroadcasts() {
+  const hasData = videos.length > 0
+
   return (
-    <section className="py-24 bg-rs-dark">
+    <section className="section">
       <div className="container-rs">
-        <div className="flex items-end justify-between mb-12">
+        <div className="section-header">
           <div>
-            <p className="section-label mb-3">On the air</p>
-            <h2 className="text-headline font-bold text-rs-white">Latest broadcasts</h2>
+            <p className="section-label mb-2"><T k="broadcasts.recentCoverage" /></p>
+            <h2 className="section-title"><T k="broadcasts.latestBroadcasts" /></h2>
           </div>
-          <Link href="/broadcasts" className="hidden sm:flex btn-outline text-xs">
-            Full archive
+          <Link href="/broadcasts" className="btn-ghost hidden sm:flex">
+            <T k="broadcasts.viewAll" />
           </Link>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {PLACEHOLDER_VIDEOS.map((v, i) => (
-            <article key={i} className="group">
-              <div className="relative aspect-video bg-rs-gray overflow-hidden mb-3">
-                <Image
-                  src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`}
-                  alt={v.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-rs-black/40 group-hover:bg-rs-black/20 transition-colors" />
-                <span className="absolute top-2 left-2 bg-rs-black/80 text-rs-yellow text-xs font-mono px-2 py-0.5">
-                  {v.category}
-                </span>
-                {/* Play button */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-12 h-12 rounded-full bg-rs-yellow flex items-center justify-center">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M5 3l9 5-9 5V3z" fill="#0A0A0A" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <p className="text-rs-white text-sm font-medium leading-snug mb-1 group-hover:text-rs-yellow transition-colors">
-                {v.title}
+        {/* Live stream banner */}
+        {liveStream && (
+          <a
+            href={`https://youtube.com/watch?v=${liveStream.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-4 p-4 mb-8 rounded-rs border border-rs-live/40 bg-rs-dark group hover:border-rs-live transition-colors"
+          >
+            <span className="badge-live shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-live" />
+              <T k="hero.liveNow" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-white font-semibold truncate group-hover:text-rs-yellow transition-colors">
+                {liveStream.title}
               </p>
-              <p className="text-rs-muted text-xs">{v.date}</p>
-            </article>
-          ))}
-        </div>
+              <p className="text-rs-muted text-xs">
+                {formatViewCount(liveStream.concurrentViewers)} <T k="live.watching" />
+              </p>
+            </div>
+            <span className="text-rs-yellow text-sm font-display font-bold uppercase tracking-wider shrink-0">
+              Watch ▶
+            </span>
+          </a>
+        )}
+
+        {/* Video grid — 3 latest broadcasts */}
+        {hasData ? (
+          <div className="card-grid card-grid--3">
+            {videos.map((video) => (
+              <VideoCard key={video.id} video={video} />
+            ))}
+          </div>
+        ) : (
+          <FallbackBroadcasts />
+        )}
       </div>
     </section>
+  )
+}
+
+/** Fallback when YouTube API is unavailable */
+function FallbackBroadcasts() {
+  const placeholders = [
+    { emoji: '🏎', title: 'Latest broadcast from RaceSpot.tv', category: 'Broadcast' },
+    { emoji: '🏁', title: 'Recent race coverage', category: 'Coverage' },
+    { emoji: '🌙', title: 'Endurance event replay', category: 'Endurance' },
+  ]
+
+  return (
+    <div className="card-grid card-grid--3">
+      {placeholders.map((b, i) => (
+        <a
+          key={i}
+          href="https://www.youtube.com/@RaceSpotTV"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="card-dark overflow-hidden group"
+        >
+          <div className="aspect-video bg-rs-gray flex items-center justify-center">
+            <span className="text-4xl">{b.emoji}</span>
+          </div>
+          <div className="p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-rs-yellow mb-1.5">
+              {b.category}
+            </p>
+            <h3 className="text-[15px] font-semibold text-white leading-snug mb-2 group-hover:text-rs-yellow transition-colors">{b.title}</h3>
+            <p className="text-xs text-rs-muted"><T k="broadcasts.watchOnYT" /></p>
+          </div>
+        </a>
+      ))}
+    </div>
   )
 }

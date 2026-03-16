@@ -1,0 +1,143 @@
+import type { Metadata } from 'next'
+import Image from 'next/image'
+import { Team } from '@/components/sections/Team'
+import { T } from '@/components/ui/T'
+import type { TranslationKey } from '@/lib/i18n/translations'
+
+export const metadata: Metadata = {
+  title: 'About Us',
+  description: 'Learn about Racespot — the world\'s leading simracing broadcast studio, based in Cologne, Germany.',
+}
+
+const MILESTONES: { year: string; textKey: TranslationKey }[] = [
+  { year: '2013', textKey: 'about.milestone.2013' },
+  { year: '2016', textKey: 'about.milestone.2016' },
+  { year: '2018', textKey: 'about.milestone.2018' },
+  { year: '2019', textKey: 'about.milestone.2019' },
+  { year: '2021', textKey: 'about.milestone.2021' },
+  { year: '2023', textKey: 'about.milestone.2023' },
+  { year: '2024', textKey: 'about.milestone.2024' },
+  { year: '2026', textKey: 'about.milestone.2026' },
+]
+
+const STATS: { value: string; labelKey: TranslationKey }[] = [
+  { value: '400+', labelKey: 'about.stat.events' },
+  { value: '8', labelKey: 'about.stat.languages' },
+  { value: '100M+', labelKey: 'about.stat.impressions' },
+  { value: '6.2M+', labelKey: 'about.stat.ytViews' },
+]
+
+export default function AboutPage() {
+  return (
+    <div>
+      {/* Hero Banner */}
+      <section className="relative h-[300px] md:h-[400px] overflow-hidden">
+        <Image
+          src="/images/gallery/SimplyRace-8482.jpg"
+          alt="Racespot team at event"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-rs-black via-rs-black/60 to-rs-black/20" />
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-rs-yellow via-rs-yellow/50 to-transparent" />
+        <div className="container-rs relative h-full flex items-end pb-10">
+          <div>
+            <p className="section-label mb-3"><T k="about.label" /></p>
+            <h1 className="display-title"><T k="about.title" /></h1>
+          </div>
+        </div>
+      </section>
+
+      {/* About content */}
+      <div className="container-rs py-16">
+        <div className="grid md:grid-cols-2 gap-12 mb-20">
+          <div>
+            <h2 className="font-display font-bold text-2xl uppercase text-white mb-6">
+              <T k="about.heading1" />
+            </h2>
+            <div className="space-y-4 text-[15px] text-rs-muted leading-relaxed">
+              <p><T k="about.p1" /></p>
+              <p><T k="about.p2" /></p>
+              <p><T k="about.p3" /></p>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="font-display font-bold text-2xl uppercase text-white mb-6">
+              <T k="about.heading2" />
+            </h2>
+            <div className="space-y-4 text-[15px] text-rs-muted leading-relaxed">
+              <p><T k="about.p4" /></p>
+              <p><T k="about.p5" /></p>
+            </div>
+
+            {/* Key stats */}
+            <div className="grid grid-cols-2 gap-4 mt-8">
+              {STATS.map((stat) => (
+                <div key={stat.labelKey} className="bg-rs-dark border border-rs-border rounded-rs p-4">
+                  <p className="font-display font-black text-rs-yellow text-2xl">{stat.value}</p>
+                  <p className="text-xs text-rs-muted uppercase tracking-wider mt-1"><T k={stat.labelKey} /></p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div className="mb-20">
+          <p className="section-label mb-2"><T k="about.journey" /></p>
+          <h2 className="font-display font-bold text-2xl uppercase text-white mb-10"><T k="about.milestones" /></h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {MILESTONES.map((m) => (
+              <div key={m.year} className="border-l-2 border-rs-yellow pl-4 py-2">
+                <p className="font-display font-bold text-rs-yellow text-lg">{m.year}</p>
+                <p className="text-sm text-rs-muted mt-1"><T k={m.textKey} /></p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Team section (reused component) */}
+      <Team />
+
+      {/* Behind the scenes images */}
+      <section className="section">
+        <div className="container-rs">
+          <p className="section-label mb-2"><T k="about.behindScenes" /></p>
+          <h2 className="font-display font-bold text-2xl uppercase text-white mb-8"><T k="about.howWeWork" /></h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative aspect-[4/3] rounded-rs overflow-hidden">
+              <Image
+                src="/images/setup/SimplyRace-8742.jpg"
+                alt="Broadcast control room"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 33vw"
+              />
+            </div>
+            <div className="relative aspect-[4/3] rounded-rs overflow-hidden">
+              <Image
+                src="/images/gallery/SimplyRace-8918.jpg"
+                alt="Sim racing cockpit setup"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 33vw"
+              />
+            </div>
+            <div className="relative aspect-[4/3] rounded-rs overflow-hidden">
+              <Image
+                src="/images/gallery/ERLFinals-Heat1-38.jpeg"
+                alt="ERL Finals live event"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 33vw"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}

@@ -1,46 +1,65 @@
-const TEAM = [
-  {
-    name: 'Philip Stamm',
-    role: 'CEO & Founder',
-    bio: "Simracing pioneer since 1997. Built Racespot from a passion project into the world's leading sim racing broadcast company.",
-    tag: 'Est. Racespot',
-  },
+'use client'
+
+import Image from 'next/image'
+import { useTranslation } from '@/lib/language'
+import type { TranslationKey } from '@/lib/i18n/translations'
+
+const TEAM: { name: string; roleKey: TranslationKey; bioKey: TranslationKey; image: string; imagePos?: string }[] = [
   {
     name: 'Hugo L. C. Marins',
-    role: 'Producer & Co-Founder',
-    bio: 'iRacing World Champion 2011. Oversees production for 400+ broadcasts per year. Brings competitive insight to every broadcast.',
-    tag: 'iRW Champion 2011',
+    roleKey: 'team.hugo.role',
+    bioKey: 'team.hugo.bio',
+    image: '/images/team/Coanda_LMVS_IRL_LM24-134.jpg',
+  },
+  {
+    name: 'Philip Stamm',
+    roleKey: 'team.philip.role',
+    bioKey: 'team.philip.bio',
+    image: '/images/team/IMG_2445.jpeg',
+    imagePos: 'object-[center_20%]',
   },
   {
     name: 'Aaron von Lüpke',
-    role: 'Head of Sales',
-    bio: 'Sponsorship and partnerships expert. Connects brands to sim racing\'s fast-growing, tech-savvy audience.',
-    tag: 'Partnerships',
+    roleKey: 'team.aaron.role',
+    bioKey: 'team.aaron.bio',
+    image: '/images/team/Aaron_1[3477].jpeg',
   },
 ]
 
 export function Team() {
-  return (
-    <section className="py-24">
-      <div className="container-rs">
-        <p className="section-label mb-3">The people behind the mic</p>
-        <h2 className="text-headline font-bold text-rs-white mb-16">Our team</h2>
+  const t = useTranslation()
 
-        <div className="grid md:grid-cols-3 gap-8">
+  return (
+    <section className="section section--alt">
+      <div className="container-rs">
+        <p className="section-label mb-2">{t('team.label')}</p>
+        <h2 className="section-title mb-12">{t('team.title')}</h2>
+
+        <div className="card-grid card-grid--3">
           {TEAM.map((person) => (
-            <div key={person.name} className="relative">
-              {/* Placeholder avatar */}
-              <div className="w-16 h-16 bg-rs-gray border border-rs-border rounded-full mb-6 flex items-center justify-center">
-                <span className="text-rs-muted text-xl font-bold">{person.name[0]}</span>
+            <div key={person.name} className="text-center group">
+              {/* Photo Avatar */}
+              <div className="w-[140px] h-[140px] mx-auto mb-5 rounded-full overflow-hidden border-[3px] border-rs-border
+                              group-hover:border-rs-yellow group-hover:shadow-[0_0_20px_rgba(245,192,0,0.15)]
+                              transition-all duration-300 relative">
+                <Image
+                  src={person.image}
+                  alt={person.name}
+                  fill
+                  className={`object-cover transition-transform duration-500 group-hover:scale-110 ${person.imagePos || ''}`}
+                  sizes="140px"
+                />
               </div>
 
-              <span className="section-label text-rs-muted/60 text-[10px] mb-2 block">
-                {person.tag}
-              </span>
-
-              <h3 className="text-rs-white font-semibold text-lg">{person.name}</h3>
-              <p className="text-rs-yellow text-sm mb-3">{person.role}</p>
-              <p className="text-rs-muted text-sm leading-relaxed">{person.bio}</p>
+              <h3 className="font-display font-bold text-[18px] uppercase text-white">
+                {person.name}
+              </h3>
+              <p className="text-[13px] text-rs-yellow mt-1 mb-3">
+                {t(person.roleKey)}
+              </p>
+              <p className="text-[13px] text-rs-muted leading-relaxed max-w-[280px] mx-auto">
+                {t(person.bioKey)}
+              </p>
             </div>
           ))}
         </div>
