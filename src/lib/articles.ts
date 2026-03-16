@@ -91,7 +91,7 @@ export const ARTICLES: Article[] = [
       'The IMSA Esports series brings legendary endurance racing to the digital world — and Racespot brings it to your screen with broadcast-grade production across the full season.',
     date: '2025-10-15',
     readTime: '4 min',
-    image: '/images/gallery/IMSAEsports_R4_EMM-1.png',
+    image: '/images/gallery/IMSAEsports_R4_EMM-1.jpg',
     imageAlt: 'IMSA Esports prototype racing under floodlights at Daytona',
     content: [
       'When IMSA — the sanctioning body behind the Rolex 24 at Daytona and Petit Le Mans — brings its legendary endurance racing heritage to the virtual world, the result is something special. The IMSA Esports series on iRacing captures the spirit of multi-class prototype and GT racing with a level of authenticity that only a direct partnership between IMSA and iRacing can deliver.',

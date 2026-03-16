@@ -4,11 +4,11 @@ import Image from 'next/image'
 import { useTranslation } from '@/lib/language'
 
 const GALLERY = [
-  { src: '/images/gallery/Coke_Interlagos_Sprint_1_030425.png', alt: 'NASCAR Coke Series at Interlagos', span: 'col-span-2 row-span-2' },
+  { src: '/images/gallery/Coke_Interlagos_Sprint_1_030425.jpg', alt: 'NASCAR Coke Series at Interlagos', span: 'col-span-2 row-span-2' },
   { src: '/images/gallery/F4-R7-28.jpeg', alt: 'F4 Esports side-by-side racing', span: '' },
-  { src: '/images/gallery/IMSAEsports_R4_EMM-1.png', alt: 'IMSA Esports night race at Daytona', span: '' },
+  { src: '/images/gallery/IMSAEsports_R4_EMM-1.jpg', alt: 'IMSA Esports night race at Daytona', span: '' },
   { src: '/images/gallery/GRAB_034.jpeg', alt: 'LMP prototypes on track', span: '' },
-  { src: '/images/gallery/mkexTJ35SZ2PESn.png', alt: 'NASCAR pack racing overhead view', span: '' },
+  { src: '/images/gallery/mkexTJ35SZ2PESn.jpg', alt: 'NASCAR pack racing overhead view', span: '' },
 ]
 
 export function PhotoGallery() {

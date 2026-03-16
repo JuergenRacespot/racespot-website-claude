@@ -107,34 +107,26 @@ export default function AboutPage() {
         <div className="container-rs">
           <p className="section-label mb-2"><T k="about.behindScenes" /></p>
           <h2 className="font-display font-bold text-2xl uppercase text-white mb-8"><T k="about.howWeWork" /></h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative aspect-[4/3] rounded-rs overflow-hidden">
-              <Image
-                src="/images/setup/SimplyRace-8742.jpg"
-                alt="Broadcast control room"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 33vw"
-              />
-            </div>
-            <div className="relative aspect-[4/3] rounded-rs overflow-hidden">
-              <Image
-                src="/images/gallery/SimplyRace-8918.jpg"
-                alt="Sim racing cockpit setup"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 33vw"
-              />
-            </div>
-            <div className="relative aspect-[4/3] rounded-rs overflow-hidden">
-              <Image
-                src="/images/gallery/ERLFinals-Heat1-38.jpeg"
-                alt="ERL Finals live event"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 33vw"
-              />
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[
+              { src: '/images/setup/image (5).jpeg', alt: 'Broadcast equipment setup' },
+              { src: '/images/setup/image (4).jpeg', alt: 'Production control room' },
+              { src: '/images/setup/Image.jpeg', alt: 'Sim racing hardware' },
+              { src: '/images/setup/Image (1).jpeg', alt: 'Event preparation' },
+              { src: '/images/setup/SimplyRace-8654.jpeg', alt: 'Behind the scenes' },
+              { src: '/images/setup/WhatsApp Image 2026-03-13 at 09.41.36.jpeg', alt: 'On-site broadcast setup' },
+            ].map((img) => (
+              <div key={img.src} className="relative aspect-[4/3] rounded-rs overflow-hidden group">
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 50vw, 33vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-rs-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
+            ))}
           </div>
         </div>
       </section>
