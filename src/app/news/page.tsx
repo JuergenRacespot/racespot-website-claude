@@ -37,7 +37,7 @@ export default function NewsPage() {
         {/* Featured */}
         <Link href={`/news/${featured.slug}`} className="group block mb-16">
           <div className="bg-rs-dark border border-rs-border hover:border-rs-yellow/40 transition-colors overflow-hidden">
-            <div className="relative aspect-[21/9] w-full">
+            <div className="relative aspect-[21/9] w-full overflow-hidden">
               <Image
                 src={featured.image}
                 alt={featured.imageAlt}
