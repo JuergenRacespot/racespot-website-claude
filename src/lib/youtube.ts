@@ -305,6 +305,13 @@ export async function getLiveStream(): Promise<YouTubeLiveStream | null> {
 
     if (!detail || detail.snippet.liveBroadcastContent !== 'live') return null
 
+    // CRITICAL: Verify this stream belongs to OUR channel!
+    // YouTube's /live URL can redirect to other channels' streams when ours is offline.
+    if (detail.snippet.channelId !== CHANNEL_ID) {
+      console.warn(`Live stream ${videoId} belongs to channel ${detail.snippet.channelId}, not ours (${CHANNEL_ID}). Ignoring.`)
+      return null
+    }
+
     return {
       id: videoId,
       title: detail.snippet.title,

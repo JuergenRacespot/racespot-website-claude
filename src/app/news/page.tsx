@@ -37,12 +37,12 @@ export default function NewsPage() {
         {/* Featured */}
         <Link href={`/news/${featured.slug}`} className="group block mb-16">
           <div className="bg-rs-dark border border-rs-border hover:border-rs-yellow/40 transition-colors overflow-hidden">
-            <div className="relative aspect-[21/9] w-full overflow-hidden">
+            <div className="relative aspect-[21/9] w-full overflow-hidden isolate">
               <Image
                 src={featured.image}
                 alt={featured.imageAlt}
                 fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 priority
                 sizes="(max-width: 768px) 100vw, 1200px"
               />
@@ -78,12 +78,12 @@ export default function NewsPage() {
               className="group flex flex-col md:flex-row md:items-center gap-4 md:gap-6 py-6 border-b border-rs-border hover:bg-rs-dark px-4 -mx-4 transition-colors"
             >
               {/* Thumbnail */}
-              <div className="relative w-full md:w-48 aspect-video md:aspect-[16/10] shrink-0 rounded-rs overflow-hidden">
+              <div className="relative w-full md:w-48 aspect-video md:aspect-[16/10] shrink-0 rounded-rs overflow-hidden isolate">
                 <Image
                   src={article.image}
                   alt={article.imageAlt}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   sizes="(max-width: 768px) 100vw, 192px"
                 />
               </div>
