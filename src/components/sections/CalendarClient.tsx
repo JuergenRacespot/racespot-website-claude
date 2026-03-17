@@ -3,27 +3,88 @@
 import { useState, useMemo, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { CalendarEvent } from '@/lib/sheets'
-import { useTranslation } from '@/lib/language'
+import { useTranslation, useLanguage, type LangCode } from '@/lib/language'
 
 const LIVE_PAGE = '/live'
 
-// ─── Locale-aware time hook ─────────────────────────────────
+// ─── Locale & time-format resolution ────────────────────────
+// Maps the site's selected language to a default locale + 24h preference.
+// The browser's region (e.g. "de-AT", "en-GB", "pt-BR") can override if it
+// belongs to the same language family, giving regionally correct formatting.
 
-function useIs24Hour(): boolean {
-  const [is24h, setIs24h] = useState(true)
+const LANG_DEFAULTS: Record<string, { locale: string; is24h: boolean }> = {
+  de: { locale: 'de-DE', is24h: true },    // Germany, Austria, Switzerland — always 24h
+  en: { locale: 'en-US', is24h: false },    // US English — 12h default
+  fr: { locale: 'fr-FR', is24h: true },     // France — 24h
+  es: { locale: 'es-ES', is24h: true },     // Spain — 24h
+  pt: { locale: 'pt-PT', is24h: true },     // Portugal — 24h
+  it: { locale: 'it-IT', is24h: true },     // Italy — 24h
+}
+
+// Regions where 12-hour time is the norm (even if the language default is 24h)
+const REGIONS_12H = new Set([
+  'US', 'PH', 'MY', 'AU', 'CA', 'NZ', 'IN', 'EG', 'SA', 'CO', 'PK', 'BD',
+])
+
+function resolveLocaleAndFormat(siteLang: LangCode): { locale: string; is24h: boolean } {
+  const defaults = LANG_DEFAULTS[siteLang] || LANG_DEFAULTS.en
+
+  if (typeof navigator === 'undefined') return defaults
+
+  // Try to find a browser locale that matches the site language
+  const browserLocales = navigator.languages || [navigator.language]
+  let matchedLocale: string | null = null
+  let region: string | null = null
+
+  for (const bl of browserLocales) {
+    const parts = bl.split('-')
+    const lang = parts[0].toLowerCase()
+    if (lang === siteLang) {
+      matchedLocale = bl
+      region = parts[1]?.toUpperCase() || null
+      break
+    }
+  }
+
+  // If no browser locale matches the site language, use the language default
+  const locale = matchedLocale || defaults.locale
+
+  // Determine 24h: start with the language default, then check if the user's
+  // region is known to use 12h (e.g. en-AU → 12h, en-GB → 24h)
+  let is24h = defaults.is24h
+
+  if (region) {
+    if (REGIONS_12H.has(region)) {
+      is24h = false
+    } else if (!defaults.is24h) {
+      // If language default is 12h (English), check if region uses 24h
+      // e.g. en-GB, en-DE → 24h
+      if (!REGIONS_12H.has(region) && region !== 'US') {
+        // Use Intl to detect for this specific locale
+        try {
+          const resolved = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions()
+          is24h = !resolved.hour12
+        } catch {
+          // keep default
+        }
+      }
+    }
+  }
+
+  return { locale, is24h }
+}
+
+function useLocaleFormat() {
+  const { lang } = useLanguage()
+  const [result, setResult] = useState<{ locale: string; is24h: boolean }>(() =>
+    LANG_DEFAULTS[lang] || LANG_DEFAULTS.en
+  )
 
   useEffect(() => {
-    try {
-      const locale = navigator.language || 'en'
-      if (locale.startsWith('de')) { setIs24h(true); return }
-      const resolved = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions()
-      setIs24h(!resolved.hour12)
-    } catch {
-      setIs24h(false)
-    }
-  }, [])
+    setResult(resolveLocaleAndFormat(lang))
+  }, [lang])
 
-  return is24h
+  return result
 }
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -32,10 +93,9 @@ function localDate(iso: string) {
   return new Date(iso)
 }
 
-function formatTime(iso: string, is24h: boolean): string {
+function formatTime(iso: string, is24h: boolean, locale: string): string {
   const d = localDate(iso)
   try {
-    const locale = typeof navigator !== 'undefined' ? navigator.language : 'en'
     return d.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
@@ -50,8 +110,19 @@ function formatTime(iso: string, is24h: boolean): string {
   }
 }
 
-function formatWeekday(iso: string): string {
-  return localDate(iso).toLocaleDateString([], { weekday: 'short' })
+function formatWeekday(iso: string, locale: string): string {
+  return localDate(iso).toLocaleDateString(locale, { weekday: 'short' })
+}
+
+function getWeekdayNames(locale: string): string[] {
+  // Generate localized weekday abbreviations starting from Sunday
+  const names: string[] = []
+  for (let i = 0; i < 7; i++) {
+    // Jan 4 2026 is a Sunday
+    const d = new Date(2026, 0, 4 + i)
+    names.push(d.toLocaleDateString(locale, { weekday: 'short' }))
+  }
+  return names
 }
 
 function getMonthKey(iso: string): string {
@@ -59,10 +130,10 @@ function getMonthKey(iso: string): string {
   return `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`
 }
 
-function getMonthLabel(key: string): string {
+function getMonthLabel(key: string, locale: string): string {
   const [year, month] = key.split('-').map(Number)
   const d = new Date(year, month, 1)
-  return d.toLocaleDateString([], { month: 'long', year: 'numeric' })
+  return d.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
 }
 
 function getUserTimezone(): string {
@@ -94,7 +165,7 @@ function LiveBadge() {
 
 // ─── List View ──────────────────────────────────────────────
 
-function ListView({ events, year, month, is24h }: { events: CalendarEvent[]; year: number; month: number; is24h: boolean }) {
+function ListView({ events, year, month, is24h, locale }: { events: CalendarEvent[]; year: number; month: number; is24h: boolean; locale: string }) {
   const monthEvents = useMemo(() => {
     return events.filter((e) => {
       const d = localDate(e.dateISO)
@@ -113,18 +184,18 @@ function ListView({ events, year, month, is24h }: { events: CalendarEvent[]; yea
       </div>
       <div>
         {monthEvents.map(event => (
-          <EventRow key={event.id} event={event} is24h={is24h} />
+          <EventRow key={event.id} event={event} is24h={is24h} locale={locale} />
         ))}
       </div>
     </div>
   )
 }
 
-function EventRow({ event, is24h }: { event: CalendarEvent; is24h: boolean }) {
+function EventRow({ event, is24h, locale }: { event: CalendarEvent; is24h: boolean; locale: string }) {
   const d = localDate(event.dateISO)
   const day = d.getDate()
-  const weekday = formatWeekday(event.dateISO)
-  const monthStr = d.toLocaleDateString([], { month: 'short' })
+  const weekday = formatWeekday(event.dateISO, locale)
+  const monthStr = d.toLocaleDateString(locale, { month: 'short' })
 
   return (
     <a
@@ -148,9 +219,9 @@ function EventRow({ event, is24h }: { event: CalendarEvent; is24h: boolean }) {
           <p className="text-rs-muted text-xs mt-0.5 truncate">{event.description}</p>
         )}
         <div className="flex items-center gap-1.5 mt-1">
-          <span className="text-[11px] text-rs-yellow font-bold">{formatTime(event.dateISO, is24h)}</span>
+          <span className="text-[11px] text-rs-yellow font-bold">{formatTime(event.dateISO, is24h, locale)}</span>
           <span className="text-[10px] text-rs-muted/50">–</span>
-          <span className="text-[11px] text-rs-muted">{formatTime(event.endDateISO, is24h)}</span>
+          <span className="text-[11px] text-rs-muted">{formatTime(event.endDateISO, is24h, locale)}</span>
         </div>
       </div>
       <div className="flex items-center">
@@ -169,11 +240,13 @@ function CalendarGridView({
   year,
   month,
   is24h,
+  locale,
 }: {
   events: CalendarEvent[]
   year: number
   month: number
   is24h: boolean
+  locale: string
 }) {
   const eventsByDay = useMemo(() => {
     const map = new Map<number, CalendarEvent[]>()
@@ -198,7 +271,7 @@ function CalendarGridView({
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month
   const todayDate = today.getDate()
 
-  const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const WEEKDAYS = useMemo(() => getWeekdayNames(locale), [locale])
 
   const cells: (number | null)[] = []
   for (let i = 0; i < firstDay; i++) cells.push(null)
@@ -233,6 +306,7 @@ function CalendarGridView({
                 events={dayEvents}
                 isToday={isToday}
                 is24h={is24h}
+                locale={locale}
               />
             )
           })}
@@ -249,11 +323,13 @@ function DayCell({
   events,
   isToday,
   is24h,
+  locale,
 }: {
   day: number
   events: CalendarEvent[]
   isToday: boolean
   is24h: boolean
+  locale: string
 }) {
   const [activeIndex, setActiveIndex] = useState(0)
   const hasEvents = events.length > 0
@@ -305,7 +381,7 @@ function DayCell({
                 transition={{ duration: 0.15 }}
                 className="h-full"
               >
-                <EventCard event={events[activeIndex]} is24h={is24h} />
+                <EventCard event={events[activeIndex]} is24h={is24h} locale={locale} />
               </motion.div>
             </AnimatePresence>
           </div>
@@ -365,7 +441,7 @@ function DayCell({
 
 // ─── Event Card (for calendar grid) ─────────────────────────
 
-function EventCard({ event, is24h }: { event: CalendarEvent; is24h: boolean }) {
+function EventCard({ event, is24h, locale }: { event: CalendarEvent; is24h: boolean; locale: string }) {
   return (
     <a
       href={LIVE_PAGE}
@@ -395,7 +471,7 @@ function EventCard({ event, is24h }: { event: CalendarEvent; is24h: boolean }) {
       {/* Start time */}
       <div className="mt-auto pt-1">
         <span className="text-[10px] md:text-[11px] text-rs-yellow font-bold whitespace-nowrap">
-          {formatTime(event.dateISO, is24h)}
+          {formatTime(event.dateISO, is24h, locale)}
         </span>
       </div>
     </a>
@@ -427,7 +503,7 @@ export function CalendarClient({ events }: { events: CalendarEvent[] }) {
   const [calYear, setCalYear] = useState(now.getFullYear())
   const [calMonth, setCalMonth] = useState(now.getMonth())
   const timezone = getUserTimezone()
-  const is24h = useIs24Hour()
+  const { locale, is24h } = useLocaleFormat()
   const t = useTranslation()
 
   const liveEvents = useMemo(() => events.filter(e => e.isLive), [events])
@@ -449,7 +525,7 @@ export function CalendarClient({ events }: { events: CalendarEvent[] }) {
     }
   }
 
-  const calMonthLabel = new Date(calYear, calMonth, 1).toLocaleDateString([], {
+  const calMonthLabel = new Date(calYear, calMonth, 1).toLocaleDateString(locale, {
     month: 'long',
     year: 'numeric',
   })
@@ -525,9 +601,9 @@ export function CalendarClient({ events }: { events: CalendarEvent[] }) {
 
       {/* View content */}
       {viewMode === 'list' ? (
-        <ListView events={events} year={calYear} month={calMonth} is24h={is24h} />
+        <ListView events={events} year={calYear} month={calMonth} is24h={is24h} locale={locale} />
       ) : (
-        <CalendarGridView events={events} year={calYear} month={calMonth} is24h={is24h} />
+        <CalendarGridView events={events} year={calYear} month={calMonth} is24h={is24h} locale={locale} />
       )}
 
       {/* Footer */}
