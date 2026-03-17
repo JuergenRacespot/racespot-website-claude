@@ -77,7 +77,7 @@ export async function POST(request: Request) {
         from: `"Racespot.tv Website" <${process.env.SMTP_USER}>`,
         to: process.env.CONTACT_EMAIL || 'contact@racespot.tv',
         replyTo: `"${name}" <${email}>`,
-        subject: `[Website Contact] ${subject || 'New Inquiry'}`,
+        subject: `Website Form: ${subject || 'New Inquiry'}`,
         text: `New contact form submission\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject || 'N/A'}\n\nMessage:\n${message}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
