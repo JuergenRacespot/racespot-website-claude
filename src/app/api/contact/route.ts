@@ -73,6 +73,7 @@ export async function POST(request: Request) {
         },
       })
 
+      // Send to Racespot
       await transporter.sendMail({
         from: `"Racespot.tv Website" <${process.env.SMTP_USER}>`,
         to: process.env.CONTACT_EMAIL || 'contact@racespot.tv',
@@ -97,6 +98,34 @@ export async function POST(request: Request) {
             </div>
             <div style="background: #0A0A0A; padding: 12px 24px; text-align: center;">
               <p style="color: #666; font-size: 12px; margin: 0;">Sent via racespot.tv contact form</p>
+            </div>
+          </div>
+        `,
+      })
+
+      // Send confirmation copy to the sender
+      await transporter.sendMail({
+        from: `"Racespot.tv" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: `Copy of your message to Racespot.tv: ${subject || 'New Inquiry'}`,
+        text: `Hi ${name},\n\nThank you for reaching out to Racespot.tv! This is a copy of the message you sent:\n\nSubject: ${subject || 'N/A'}\n\n${message}\n\n---\nWe'll get back to you as soon as possible.\n\nBest regards,\nThe Racespot Team\ncontact@racespot.tv\nhttps://racespot.tv`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #0A0A0A; padding: 20px 24px; border-bottom: 3px solid #F5C000;">
+              <h2 style="color: #F5C000; margin: 0; font-size: 18px;">Thank you for your message!</h2>
+            </div>
+            <div style="background: #1A1A1A; padding: 24px; color: #ffffff;">
+              <p style="color: #ccc; margin: 0 0 16px;">Hi ${escapeHtml(name)},</p>
+              <p style="color: #ccc; margin: 0 0 16px;">Thank you for reaching out to Racespot.tv! Here is a copy of your message:</p>
+              <div style="background: #111; border-left: 3px solid #F5C000; padding: 16px; margin: 16px 0;">
+                <p style="color: #999; margin: 0 0 4px; font-size: 12px;">Subject: ${escapeHtml(subject || 'N/A')}</p>
+                <p style="color: #fff; white-space: pre-wrap; margin: 0;">${escapeHtml(message)}</p>
+              </div>
+              <p style="color: #ccc; margin: 16px 0 0;">We'll get back to you as soon as possible.</p>
+              <p style="color: #999; margin: 16px 0 0;">Best regards,<br>The Racespot Team</p>
+            </div>
+            <div style="background: #0A0A0A; padding: 12px 24px; text-align: center;">
+              <p style="color: #666; font-size: 12px; margin: 0;"><a href="https://racespot.tv" style="color: #F5C000;">racespot.tv</a> &middot; <a href="mailto:contact@racespot.tv" style="color: #F5C000;">contact@racespot.tv</a></p>
             </div>
           </div>
         `,
