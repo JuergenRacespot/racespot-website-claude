@@ -17,10 +17,11 @@ const NAV_LINKS: { href: string; labelKey: TranslationKey; isLiveLink?: boolean 
 ]
 
 interface HeaderProps {
-  isLive?: boolean
+  liveCount?: number
 }
 
-export function Header({ isLive = false }: HeaderProps) {
+export function Header({ liveCount = 0 }: HeaderProps) {
+  const isLive = liveCount > 0
   const [menuOpen, setMenuOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
   const langRef = useRef<HTMLDivElement>(null)
@@ -84,6 +85,11 @@ export function Header({ isLive = false }: HeaderProps) {
                   </span>
                 )}
                 {t(labelKey)}
+                {showLiveIndicator && liveCount > 1 && (
+                  <span className="ml-0.5 bg-rs-live text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                    {liveCount}
+                  </span>
+                )}
                 {isActive && !showLiveIndicator && (
                   <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-rs-yellow" />
                 )}
@@ -158,6 +164,11 @@ export function Header({ isLive = false }: HeaderProps) {
                 >
                   {showLiveIndicator && <span className="w-2 h-2 rounded-full bg-rs-live animate-pulse-live" />}
                   {t(labelKey)}
+                  {showLiveIndicator && liveCount > 1 && (
+                    <span className="ml-1 bg-rs-live text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {liveCount}
+                    </span>
+                  )}
                 </Link>
               )
             })}

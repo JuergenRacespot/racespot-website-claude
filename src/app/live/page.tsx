@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getLiveStream, getLiveStreamViaSearch } from '@/lib/youtube'
+import { getLiveStreams, getLiveStreamsViaSearch } from '@/lib/youtube'
 import { getUpcomingEvents } from '@/lib/sheets'
 import { LiveEmbed } from '@/components/sections/LiveEmbed'
 import { LiveOffline } from '@/components/sections/LiveOffline'
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
 export default async function LivePage() {
   const channelId = process.env.YOUTUBE_CHANNEL_ID || ''
 
-  const [liveStream, events] = await Promise.all([
-    getLiveStream(),
+  const [liveStreams, events] = await Promise.all([
+    getLiveStreams(),
     getUpcomingEvents(10),
   ])
 
@@ -40,17 +40,17 @@ export default async function LivePage() {
       tier: e.tier,
     }))
 
-  // If YouTube scraping found a specific live stream, use it
-  if (liveStream) {
-    return <LiveEmbed liveStream={liveStream} upcomingEvents={upcomingEvents} />
+  // If YouTube found live streams, show them
+  if (liveStreams.length > 0) {
+    return <LiveEmbed liveStreams={liveStreams} upcomingEvents={upcomingEvents} />
   }
 
   // If Sheets says we're live but scraping failed (cloud IP blocked),
   // use the Search API as fallback (100 units, but only when actually live)
   if (liveEvents.length > 0) {
-    const searchResult = await getLiveStreamViaSearch()
-    if (searchResult) {
-      return <LiveEmbed liveStream={searchResult} upcomingEvents={upcomingEvents} />
+    const searchResults = await getLiveStreamsViaSearch()
+    if (searchResults.length > 0) {
+      return <LiveEmbed liveStreams={searchResults} upcomingEvents={upcomingEvents} />
     }
   }
 

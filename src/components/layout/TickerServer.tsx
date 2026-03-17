@@ -1,7 +1,7 @@
 import { Ticker } from './Ticker'
 import type { TickerItem } from './Ticker'
 import { getUpcomingEvents } from '@/lib/sheets'
-import { getLiveStream, formatViewCount } from '@/lib/youtube'
+import { getLiveStreams, formatViewCount } from '@/lib/youtube'
 
 /** Fallback items when no data is available */
 const FALLBACK_ITEMS: TickerItem[] = [
@@ -15,22 +15,24 @@ export async function TickerServer() {
   let isLive = false
 
   try {
-    // Fetch live stream from YouTube
-    const [liveStream, events] = await Promise.all([
-      getLiveStream(),
+    // Fetch live streams from YouTube
+    const [liveStreams, events] = await Promise.all([
+      getLiveStreams(),
       getUpcomingEvents(5),
     ])
 
     // Determine live status
     const liveEvents = events.filter(e => e.isLive)
-    isLive = !!liveStream || liveEvents.length > 0
+    isLive = liveStreams.length > 0 || liveEvents.length > 0
 
-    // Add live items only when actually live
-    if (liveStream) {
-      const viewers = formatViewCount(liveStream.concurrentViewers)
-      tickerItems.push({
-        label: `${liveStream.title} — ${viewers} Watching`,
-      })
+    // Add ALL live stream titles to ticker
+    if (liveStreams.length > 0) {
+      for (const stream of liveStreams) {
+        const viewers = formatViewCount(stream.concurrentViewers)
+        tickerItems.push({
+          label: `${stream.title} — ${viewers} Watching`,
+        })
+      }
     } else if (liveEvents.length > 0) {
       for (const event of liveEvents) {
         tickerItems.push({

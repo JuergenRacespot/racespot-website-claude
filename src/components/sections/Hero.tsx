@@ -5,13 +5,16 @@ import { useTranslation } from '@/lib/language'
 
 interface HeroProps {
   isLive?: boolean
-  liveTitle?: string | null
+  liveTitles?: string[]
   nextEventSeries?: string
   nextEventDateISO?: string
 }
 
-export function Hero({ isLive = false, liveTitle, nextEventSeries, nextEventDateISO }: HeroProps) {
+export function Hero({ isLive = false, liveTitles = [], nextEventSeries, nextEventDateISO }: HeroProps) {
   const t = useTranslation()
+
+  const hasMultipleStreams = liveTitles.length > 1
+  const singleTitle = liveTitles.length === 1 ? liveTitles[0] : null
 
   return (
     <section
@@ -46,13 +49,23 @@ export function Hero({ isLive = false, liveTitle, nextEventSeries, nextEventDate
       <div className="container-rs relative z-10 h-full flex items-center">
         <div className="max-w-[700px]">
           {/* Live / Upcoming badge */}
-          {isLive && liveTitle ? (
+          {isLive && hasMultipleStreams ? (
             <Link href="/live" className="flex items-center gap-3 mb-5 md:mb-8 group">
               <span className="badge-live">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-live" />
                 {t('hero.liveNow')}
               </span>
-              <span className="text-white/60 text-sm group-hover:text-white transition-colors line-clamp-1">{liveTitle}</span>
+              <span className="text-white/60 text-sm group-hover:text-white transition-colors">
+                {liveTitles.length} {t('live.multipleStreams')}
+              </span>
+            </Link>
+          ) : isLive && singleTitle ? (
+            <Link href="/live" className="flex items-center gap-3 mb-5 md:mb-8 group">
+              <span className="badge-live">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-live" />
+                {t('hero.liveNow')}
+              </span>
+              <span className="text-white/60 text-sm group-hover:text-white transition-colors line-clamp-1">{singleTitle}</span>
             </Link>
           ) : nextEventSeries ? (
             <Link href="/live" className="flex items-center gap-3 mb-5 md:mb-8 group">

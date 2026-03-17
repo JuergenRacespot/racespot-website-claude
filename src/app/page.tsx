@@ -6,27 +6,32 @@ import { PartnerLogos }     from '@/components/sections/PartnerLogos'
 import { PhotoGallery }     from '@/components/sections/PhotoGallery'
 import { LatestNews }       from '@/components/sections/LatestNews'
 import { ContactCTA }       from '@/components/sections/ContactCTA'
-import { getLiveStream }    from '@/lib/youtube'
+import { getLiveStreams }    from '@/lib/youtube'
 import { getUpcomingEvents } from '@/lib/sheets'
 
 /* Re-check live status & events every 60 seconds (ISR) */
 export const revalidate = 60
 
 export default async function HomePage() {
-  const [liveStream, events] = await Promise.all([
-    getLiveStream(),
+  const [liveStreams, events] = await Promise.all([
+    getLiveStreams(),
     getUpcomingEvents(3),
   ])
 
   const liveEvents = events.filter(e => e.isLive)
-  const isLive = !!liveStream || liveEvents.length > 0
+  const isLive = liveStreams.length > 0 || liveEvents.length > 0
 
-  // Live info for hero
-  const liveTitle = liveStream
-    ? liveStream.title
-    : liveEvents.length > 0
-      ? `${liveEvents[0].series}${liveEvents[0].description ? ` · ${liveEvents[0].description}` : ''}`
-      : null
+  // Build array of live titles for hero
+  const liveTitles: string[] = []
+  for (const stream of liveStreams) {
+    liveTitles.push(stream.title)
+  }
+  // If no YouTube streams but Sheets says live, use event titles
+  if (liveStreams.length === 0) {
+    for (const event of liveEvents) {
+      liveTitles.push(`${event.series}${event.description ? ` · ${event.description}` : ''}`)
+    }
+  }
 
   // Next upcoming event for hero (when not live)
   const nextEvent = events.find(e => e.isUpcoming)
@@ -35,7 +40,7 @@ export default async function HomePage() {
     <>
       <Hero
         isLive={isLive}
-        liveTitle={liveTitle}
+        liveTitles={liveTitles}
         nextEventSeries={nextEvent?.series}
         nextEventDateISO={nextEvent?.date.toISOString()}
       />

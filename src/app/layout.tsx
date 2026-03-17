@@ -5,7 +5,7 @@ import { Header } from '@/components/layout/Header'
 import { TickerServer } from '@/components/layout/TickerServer'
 import { Footer } from '@/components/layout/Footer'
 import { LanguageProvider } from '@/lib/language'
-import { getLiveStream, getLiveStreamViaSearch } from '@/lib/youtube'
+import { getLiveStreams, getLiveStreamsViaSearch } from '@/lib/youtube'
 import { getUpcomingEvents } from '@/lib/sheets'
 import { OrganizationJsonLd, WebsiteJsonLd } from '@/components/seo/JsonLd'
 
@@ -65,19 +65,19 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [liveStream, events] = await Promise.all([
-    getLiveStream(),
+  const [liveStreams, events] = await Promise.all([
+    getLiveStreams(),
     getUpcomingEvents(3),
   ])
 
   // Check if live via scraping or via Sheets calendar
   const liveEvents = events.filter((e) => e.isLive)
-  let isLive = !!liveStream || liveEvents.length > 0
+  let liveCount = liveStreams.length > 0 ? liveStreams.length : liveEvents.length
 
   // If Sheets says live but scraping failed, try Search API to confirm
-  if (!liveStream && liveEvents.length > 0) {
-    const searchResult = await getLiveStreamViaSearch()
-    isLive = !!searchResult || liveEvents.length > 0
+  if (liveStreams.length === 0 && liveEvents.length > 0) {
+    const searchResults = await getLiveStreamsViaSearch()
+    liveCount = searchResults.length > 0 ? searchResults.length : liveEvents.length
   }
 
   return (
@@ -88,7 +88,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="bg-rs-black text-white" suppressHydrationWarning>
         <LanguageProvider>
-          <Header isLive={isLive} />
+          <Header liveCount={liveCount} />
           <TickerServer />
           {/* Offset for fixed header (64px) + ticker (34px) = 98px */}
           <main className="pt-[98px]">{children}</main>

@@ -1,16 +1,16 @@
 import Link from 'next/link'
 import {
   getCompletedBroadcasts,
-  getLiveStream,
+  getLiveStreams,
   formatViewCount,
 } from '@/lib/youtube'
 import { VideoCard } from '@/components/ui/VideoCard'
 import { T } from '@/components/ui/T'
 
 export async function LatestBroadcasts() {
-  const [videos, liveStream] = await Promise.all([
+  const [videos, liveStreams] = await Promise.all([
     getCompletedBroadcasts(3),
-    getLiveStream(),
+    getLiveStreams(),
   ])
 
   const hasData = videos.length > 0
@@ -28,30 +28,33 @@ export async function LatestBroadcasts() {
           </Link>
         </div>
 
-        {/* Live stream banner */}
-        {liveStream && (
-          <a
-            href={`https://youtube.com/watch?v=${liveStream.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-4 p-4 mb-8 rounded-rs border border-rs-live/40 bg-rs-dark group hover:border-rs-live transition-colors"
-          >
-            <span className="badge-live shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-live" />
-              <T k="hero.liveNow" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-white font-semibold truncate group-hover:text-rs-yellow transition-colors">
-                {liveStream.title}
-              </p>
-              <p className="text-rs-muted text-xs">
-                {formatViewCount(liveStream.concurrentViewers)} <T k="live.watching" />
-              </p>
-            </div>
-            <span className="text-rs-yellow text-sm font-display font-bold uppercase tracking-wider shrink-0">
-              Watch ▶
-            </span>
-          </a>
+        {/* Live stream banners — one per active stream */}
+        {liveStreams.length > 0 && (
+          <div className="space-y-3 mb-8">
+            {liveStreams.map((stream) => (
+              <Link
+                key={stream.id}
+                href="/live"
+                className="flex items-center gap-4 p-4 rounded-rs border border-rs-live/40 bg-rs-dark group hover:border-rs-live transition-colors"
+              >
+                <span className="badge-live shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-live" />
+                  <T k="hero.liveNow" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-white font-semibold truncate group-hover:text-rs-yellow transition-colors">
+                    {stream.title}
+                  </p>
+                  <p className="text-rs-muted text-xs">
+                    {formatViewCount(stream.concurrentViewers)} <T k="live.watching" />
+                  </p>
+                </div>
+                <span className="text-rs-yellow text-sm font-display font-bold uppercase tracking-wider shrink-0">
+                  Watch ▶
+                </span>
+              </Link>
+            ))}
+          </div>
         )}
 
         {/* Video grid — 3 latest broadcasts */}

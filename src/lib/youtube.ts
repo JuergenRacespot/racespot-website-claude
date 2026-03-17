@@ -255,20 +255,21 @@ export async function getCompletedBroadcasts(maxResults = 6): Promise<YouTubeVid
 }
 
 /**
- * Check if channel is currently live streaming.
+ * Check if channel is currently live streaming and return ALL live streams.
  *
- * Two-tier approach:
- *   Tier 1 (0 units): Scrape channel page for live indicator
- *   Tier 2 (1 unit):  Only if scrape says "live", fetch details via videos.list
+ * Three-tier approach for multi-stream support:
+ *   Tier 1 (0 units): Scrape channel page for live indicator (just a yes/no check)
+ *   Tier 2 (100 units): If live, use Search API to find ALL concurrent live streams
+ *   Tier 3 (1 unit): Fetch details for all found streams via videos.list
  *
- * Previously: 101 units (search.list + videos.list) EVERY check.
- * Now: 0 units when offline (99%+ of the time), 1 unit when live.
+ * When offline (99%+ of the time): 0 units.
+ * When live: 101 units (search + details), cached for 60 seconds.
  */
-export async function getLiveStream(): Promise<YouTubeLiveStream | null> {
-  if (!CHANNEL_ID) return null
+export async function getLiveStreams(): Promise<YouTubeLiveStream[]> {
+  if (!CHANNEL_ID) return []
 
   try {
-    // Tier 1: Free scrape check — fetch channel's live page
+    // Tier 1: Free scrape check — is the channel live at all?
     const channelUrl = `https://www.youtube.com/channel/${CHANNEL_ID}/live`
     const scrapeRes = await fetch(channelUrl, {
       next: { revalidate: CACHE_LIVE },
@@ -277,97 +278,127 @@ export async function getLiveStream(): Promise<YouTubeLiveStream | null> {
       },
     })
 
-    if (!scrapeRes.ok) return null
+    if (!scrapeRes.ok) return []
 
     const html = await scrapeRes.text()
-
-    // Check for live indicators in the page HTML
     const isLive = html.includes('"isLive":true') || html.includes('hqdefault_live.jpg')
 
-    if (!isLive) return null
+    if (!isLive) return []
 
-    // Try to extract the video ID from the page
-    const videoIdMatch = html.match(/"videoId":"([a-zA-Z0-9_-]{11})"/)
-    if (!videoIdMatch) return null
+    // Tier 2: Search API to find ALL live streams (handles multiple concurrent broadcasts)
+    if (!API_KEY) return []
 
-    const videoId = videoIdMatch[1]
+    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${API_KEY}`
+    const searchRes = await fetch(searchUrl, { next: { revalidate: CACHE_LIVE } })
 
-    // Tier 2: Cheap API call (1 unit) — only when we know it's live
-    if (!API_KEY) return null
+    if (!searchRes.ok) return []
 
-    const detailUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoId}&key=${API_KEY}`
+    const searchData = await searchRes.json()
+    const searchItems = searchData.items || []
+
+    if (searchItems.length === 0) return []
+
+    // Tier 3: Get details for all found live streams (1 unit, up to 50 IDs)
+    const videoIds = searchItems.map((item: { id: { videoId: string } }) => item.id.videoId)
+    const detailUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoIds.join(',')}&key=${API_KEY}`
     const detailRes = await fetch(detailUrl, { next: { revalidate: CACHE_LIVE_DETAILS } })
 
-    if (!detailRes.ok) return null
+    if (!detailRes.ok) return []
 
     const detailData = await detailRes.json()
-    const detail = detailData.items?.[0]
+    const details = detailData.items || []
 
-    if (!detail || detail.snippet.liveBroadcastContent !== 'live') return null
-
-    // CRITICAL: Verify this stream belongs to OUR channel!
-    // YouTube's /live URL can redirect to other channels' streams when ours is offline.
-    if (detail.snippet.channelId !== CHANNEL_ID) {
-      console.warn(`Live stream ${videoId} belongs to channel ${detail.snippet.channelId}, not ours (${CHANNEL_ID}). Ignoring.`)
-      return null
-    }
-
-    return {
-      id: videoId,
-      title: detail.snippet.title,
-      description: detail.snippet.description,
-      thumbnail: detail.snippet.thumbnails.high?.url || detail.snippet.thumbnails.medium?.url,
-      concurrentViewers: detail.liveStreamingDetails?.concurrentViewers || '0',
-    }
+    // Filter to confirmed live streams on OUR channel
+    return details
+      .filter((detail: { snippet: { liveBroadcastContent: string; channelId: string } }) =>
+        detail.snippet.liveBroadcastContent === 'live' && detail.snippet.channelId === CHANNEL_ID
+      )
+      .map((detail: {
+        id: string
+        snippet: {
+          title: string
+          description: string
+          thumbnails: { high?: { url: string }; medium?: { url: string } }
+        }
+        liveStreamingDetails?: { concurrentViewers?: string }
+      }) => ({
+        id: detail.id,
+        title: detail.snippet.title,
+        description: detail.snippet.description,
+        thumbnail: detail.snippet.thumbnails.high?.url || detail.snippet.thumbnails.medium?.url || '',
+        concurrentViewers: detail.liveStreamingDetails?.concurrentViewers || '0',
+      }))
   } catch (error) {
     console.error('YouTube live check error:', error)
-    return null
+    return []
   }
 }
 
 /**
- * Fallback: Use YouTube Search API to find live stream.
+ * Convenience wrapper — returns first live stream or null.
+ * Used by components that only need to know "is anything live?"
+ */
+export async function getLiveStream(): Promise<YouTubeLiveStream | null> {
+  const streams = await getLiveStreams()
+  return streams[0] ?? null
+}
+
+/**
+ * Fallback: Use YouTube Search API to find ALL live streams.
  * Cost: 100 units — only call when Sheets confirms we're live but scraping failed.
  * This handles cloud environments where YouTube blocks scraping.
  */
-export async function getLiveStreamViaSearch(): Promise<YouTubeLiveStream | null> {
-  if (!API_KEY || !CHANNEL_ID) return null
+export async function getLiveStreamsViaSearch(): Promise<YouTubeLiveStream[]> {
+  if (!API_KEY || !CHANNEL_ID) return []
 
   try {
-    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&key=${API_KEY}`
+    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${API_KEY}`
     const searchRes = await fetch(searchUrl, { next: { revalidate: CACHE_LIVE } })
 
-    if (!searchRes.ok) return null
+    if (!searchRes.ok) return []
 
     const searchData = await searchRes.json()
-    const item = searchData.items?.[0]
+    const searchItems = searchData.items || []
 
-    if (!item) return null
+    if (searchItems.length === 0) return []
 
-    const videoId = item.id.videoId
-
-    // Get live details (1 unit)
-    const detailUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoId}&key=${API_KEY}`
+    // Get live details for all found streams (1 unit)
+    const videoIds = searchItems.map((item: { id: { videoId: string } }) => item.id.videoId)
+    const detailUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoIds.join(',')}&key=${API_KEY}`
     const detailRes = await fetch(detailUrl, { next: { revalidate: CACHE_LIVE_DETAILS } })
 
-    if (!detailRes.ok) return null
+    if (!detailRes.ok) return []
 
     const detailData = await detailRes.json()
-    const detail = detailData.items?.[0]
+    const details = detailData.items || []
 
-    if (!detail) return null
-
-    return {
-      id: videoId,
+    return details.map((detail: {
+      id: string
+      snippet: {
+        title: string
+        description: string
+        thumbnails: { high?: { url: string }; medium?: { url: string } }
+      }
+      liveStreamingDetails?: { concurrentViewers?: string }
+    }) => ({
+      id: detail.id,
       title: detail.snippet.title,
       description: detail.snippet.description,
       thumbnail: detail.snippet.thumbnails.high?.url || detail.snippet.thumbnails.medium?.url || '',
       concurrentViewers: detail.liveStreamingDetails?.concurrentViewers || '0',
-    }
+    }))
   } catch (error) {
     console.error('YouTube search API live check error:', error)
-    return null
+    return []
   }
+}
+
+/**
+ * @deprecated Use getLiveStreamsViaSearch() instead
+ */
+export async function getLiveStreamViaSearch(): Promise<YouTubeLiveStream | null> {
+  const streams = await getLiveStreamsViaSearch()
+  return streams[0] ?? null
 }
 
 /**

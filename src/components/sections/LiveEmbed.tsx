@@ -14,22 +14,22 @@ interface SerializedEvent {
 }
 
 interface LiveEmbedProps {
-  liveStream: YouTubeLiveStream
-  /** When true, the id is a channel live_stream param, not a video ID */
-  isChannelEmbed?: boolean
+  liveStreams: YouTubeLiveStream[]
   upcomingEvents?: SerializedEvent[]
 }
 
-export function LiveEmbed({ liveStream, isChannelEmbed, upcomingEvents = [] }: LiveEmbedProps) {
+export function LiveEmbed({ liveStreams, upcomingEvents = [] }: LiveEmbedProps) {
   const t = useTranslation()
+  const [activeIndex, setActiveIndex] = useState(0)
 
-  // Build the correct embed URL
-  const embedUrl = isChannelEmbed
-    ? `https://www.youtube.com/embed/${liveStream.id}&autoplay=1&modestbranding=1&rel=0`
-    : `https://www.youtube.com/embed/${liveStream.id}?autoplay=1&modestbranding=1&rel=0`
+  // Clamp index if streams array changes
+  const safeIndex = Math.min(activeIndex, liveStreams.length - 1)
+  const activeStream = liveStreams[safeIndex]
 
-  // Chat embed needs a video ID; skip for channel embeds
-  const chatVideoId = isChannelEmbed ? null : liveStream.id
+  if (!activeStream) return null
+
+  const embedUrl = `https://www.youtube.com/embed/${activeStream.id}?autoplay=1&modestbranding=1&rel=0`
+  const chatVideoId = activeStream.id
 
   return (
     <div className="pt-8 min-h-screen">
@@ -39,17 +39,73 @@ export function LiveEmbed({ liveStream, isChannelEmbed, upcomingEvents = [] }: L
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-live" />
             {t('live.onAir')}
           </span>
-          {parseInt(liveStream.concurrentViewers) > 0 && (
+          {liveStreams.length > 1 && (
+            <span className="text-rs-yellow text-sm font-display font-bold">
+              {liveStreams.length} {t('live.multipleStreams')}
+            </span>
+          )}
+          {liveStreams.length === 1 && parseInt(activeStream.concurrentViewers) > 0 && (
             <span className="text-rs-muted text-sm">
-              {formatViewCount(liveStream.concurrentViewers)} {t('live.watching')}
+              {formatViewCount(activeStream.concurrentViewers)} {t('live.watching')}
             </span>
           )}
         </div>
         <h1 className="display-title mb-8">{t('live.liveNow')}</h1>
 
+        {/* Stream selector — only shown for 2+ streams */}
+        {liveStreams.length > 1 && (
+          <div className="mb-6">
+            <p className="text-xs font-display font-bold uppercase tracking-wider text-rs-muted mb-3">
+              {t('live.selectStream')}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {liveStreams.map((stream, i) => (
+                <button
+                  key={stream.id}
+                  onClick={() => setActiveIndex(i)}
+                  className={`flex items-center gap-3 p-4 rounded-rs border text-left transition-all
+                    ${i === safeIndex
+                      ? 'border-rs-yellow bg-rs-yellow/10'
+                      : 'border-rs-border bg-rs-dark hover:border-rs-yellow/40'
+                    }`}
+                >
+                  <div className="shrink-0">
+                    {i === safeIndex ? (
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rs-yellow text-rs-black text-sm font-display font-bold">
+                        ▶
+                      </span>
+                    ) : (
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-rs-border text-rs-muted text-sm font-display font-bold">
+                        {i + 1}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={`font-semibold text-sm truncate ${i === safeIndex ? 'text-white' : 'text-rs-muted'}`}>
+                      {stream.title}
+                    </p>
+                    {parseInt(stream.concurrentViewers) > 0 && (
+                      <p className="text-xs text-rs-muted">
+                        {formatViewCount(stream.concurrentViewers)} {t('live.watching')}
+                      </p>
+                    )}
+                  </div>
+                  {i === safeIndex && (
+                    <span className="badge-live shrink-0 text-[10px]">
+                      <span className="w-1 h-1 rounded-full bg-white animate-pulse-live" />
+                      LIVE
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Main embed */}
         <div className="relative aspect-video bg-rs-dark border border-rs-border rounded-rs overflow-hidden mb-6">
           <iframe
+            key={activeStream.id}
             src={embedUrl}
             className="absolute inset-0 w-full h-full"
             allow="autoplay; encrypted-media; picture-in-picture"
@@ -60,16 +116,21 @@ export function LiveEmbed({ liveStream, isChannelEmbed, upcomingEvents = [] }: L
         {/* Stream info */}
         <div className="mb-8">
           <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
-            {liveStream.title}
+            {activeStream.title}
           </h2>
-          {liveStream.description && (
+          {parseInt(activeStream.concurrentViewers) > 0 && (
+            <p className="text-rs-muted text-sm mb-1">
+              {formatViewCount(activeStream.concurrentViewers)} {t('live.watching')}
+            </p>
+          )}
+          {activeStream.description && (
             <p className="text-rs-muted text-sm max-w-2xl line-clamp-3">
-              {liveStream.description}
+              {activeStream.description}
             </p>
           )}
         </div>
 
-        {/* Chat embed — only when we have a specific video ID */}
+        {/* Chat embed */}
         {chatVideoId && (
           <div className="border border-rs-border rounded-rs overflow-hidden">
             <div className="bg-rs-dark px-4 py-2.5 border-b border-rs-border">
@@ -79,6 +140,7 @@ export function LiveEmbed({ liveStream, isChannelEmbed, upcomingEvents = [] }: L
             </div>
             <div className="relative h-[400px] lg:h-[500px]">
               <iframe
+                key={`chat-${activeStream.id}`}
                 src={`https://www.youtube.com/live_chat?v=${chatVideoId}&embed_domain=racespot.tv`}
                 className="absolute inset-0 w-full h-full"
               />
@@ -86,7 +148,7 @@ export function LiveEmbed({ liveStream, isChannelEmbed, upcomingEvents = [] }: L
           </div>
         )}
 
-        {/* Upcoming schedule — shown below live stream + chat */}
+        {/* Upcoming schedule */}
         {upcomingEvents.length > 0 && (
           <div className="mt-16">
             <div className="flex items-end justify-between mb-6">
