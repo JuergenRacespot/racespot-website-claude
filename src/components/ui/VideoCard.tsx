@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { formatViewCount, formatDate, type YouTubeVideo } from '@/lib/youtube'
 
@@ -8,6 +11,12 @@ interface VideoCardProps {
 export function VideoCard({ video }: VideoCardProps) {
   const isLive = video.liveBroadcastContent === 'live'
   const isUpcoming = video.liveBroadcastContent === 'upcoming'
+
+  // Defer date formatting to avoid hydration mismatch (server UTC vs client TZ)
+  const [dateStr, setDateStr] = useState('')
+  useEffect(() => {
+    setDateStr(formatDate(video.publishedAt))
+  }, [video.publishedAt])
 
   return (
     <a
@@ -52,7 +61,7 @@ export function VideoCard({ video }: VideoCardProps) {
           {video.title}
         </h3>
         <p className="text-xs text-rs-muted">
-          {formatViewCount(video.viewCount)} views · {formatDate(video.publishedAt)}
+          {formatViewCount(video.viewCount)} views{dateStr ? ` · ${dateStr}` : ''}
         </p>
       </div>
     </a>

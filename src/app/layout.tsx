@@ -81,12 +81,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="en" className={`${inter.variable} ${oswald.variable}`}>
+    <html lang="en" className={`${inter.variable} ${oswald.variable}`} suppressHydrationWarning>
       <head>
         <OrganizationJsonLd />
         <WebsiteJsonLd />
       </head>
-      <body className="bg-rs-black text-white">
+      <body className="bg-rs-black text-white" suppressHydrationWarning>
         <LanguageProvider>
           <Header isLive={isLive} />
           <TickerServer />

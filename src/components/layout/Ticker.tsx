@@ -67,20 +67,27 @@ function formatLocalDate(iso: string): string {
 
 export function Ticker({ items = [], isLive }: TickerProps) {
   const is24h = useIs24Hour()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   const rendered = useMemo(() => {
     if (!items || items.length === 0) return []
 
     return items.map(item => {
       if (item.dateISO) {
-        // Append localised date + time
+        if (!mounted) {
+          // Server / pre-hydration: use simple ISO-derived label to avoid mismatch
+          return item.label
+        }
+        // Client after hydration: full localised date + time
         const dateStr = formatLocalDate(item.dateISO)
         const timeStr = formatLocalTime(item.dateISO, is24h)
         return `${item.label} — ${dateStr} · ${timeStr}`
       }
       return item.label
     })
-  }, [items, is24h])
+  }, [items, is24h, mounted])
 
   if (rendered.length === 0) return null
 
