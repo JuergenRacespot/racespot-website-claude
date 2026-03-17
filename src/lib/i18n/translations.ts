@@ -1,18 +1,18 @@
 export const translations = {
   // ─── Navigation ──────────────────────────────────────────
-  'nav.broadcasts':    { en: 'Broadcasts', de: 'Sendungen', es: 'Emisiones', pt: 'Transmissões', fr: 'Diffusions', it: 'Trasmissioni' },
+  'nav.broadcasts':    { en: 'Broadcasts', de: 'Broadcasts', es: 'Emisiones', pt: 'Transmissões', fr: 'Diffusions', it: 'Trasmissioni' },
   'nav.calendar':      { en: 'Calendar', de: 'Kalender', es: 'Calendario', pt: 'Calendário', fr: 'Calendrier', it: 'Calendario' },
   'nav.events':        { en: 'Events', de: 'Events', es: 'Eventos', pt: 'Eventos', fr: 'Événements', it: 'Eventi' },
-  'nav.services':      { en: 'Services', de: 'Leistungen', es: 'Servicios', pt: 'Serviços', fr: 'Services', it: 'Servizi' },
+  'nav.services':      { en: 'Services', de: 'Services', es: 'Servicios', pt: 'Serviços', fr: 'Services', it: 'Servizi' },
   'nav.news':          { en: 'News', de: 'News', es: 'Noticias', pt: 'Notícias', fr: 'Actualités', it: 'Notizie' },
   'nav.live':          { en: 'Live', de: 'Live', es: 'En Vivo', pt: 'Ao Vivo', fr: 'En Direct', it: 'In Diretta' },
   'nav.getQuote':      { en: 'Get a Quote', de: 'Angebot anfragen', es: 'Solicitar presupuesto', pt: 'Solicitar orçamento', fr: 'Demander un devis', it: 'Richiedi preventivo' },
 
   // ─── Hero ────────────────────────────────────────────────
   'hero.liveNow':      { en: 'Live Now', de: 'Jetzt Live', es: 'En Vivo', pt: 'Ao Vivo Agora', fr: 'En Direct', it: 'In Diretta' },
-  'hero.nextBroadcast': { en: 'Next Broadcast', de: 'Nächste Sendung', es: 'Próxima emisión', pt: 'Próxima transmissão', fr: 'Prochaine diffusion', it: 'Prossima trasmissione' },
+  'hero.nextBroadcast': { en: 'Next Broadcast', de: 'Nächster Broadcast', es: 'Próxima emisión', pt: 'Próxima transmissão', fr: 'Prochaine diffusion', it: 'Prossima trasmissione' },
   'hero.watchLive':    { en: 'Watch Live Now', de: 'Jetzt live ansehen', es: 'Ver en vivo', pt: 'Assistir ao vivo', fr: 'Regarder en direct', it: 'Guarda in diretta' },
-  'hero.watchBroadcasts': { en: 'Watch Broadcasts', de: 'Sendungen ansehen', es: 'Ver emisiones', pt: 'Ver transmissões', fr: 'Voir les diffusions', it: 'Guarda le trasmissioni' },
+  'hero.watchBroadcasts': { en: 'Watch Broadcasts', de: 'Broadcasts ansehen', es: 'Ver emisiones', pt: 'Ver transmissões', fr: 'Voir les diffusions', it: 'Guarda le trasmissioni' },
   'hero.viewSchedule': { en: 'View Schedule', de: 'Zeitplan ansehen', es: 'Ver horario', pt: 'Ver programação', fr: 'Voir le programme', it: 'Vedi programma' },
   'hero.title.line1':  { en: "THE WORLD'S", de: 'DAS WELTWEIT', es: 'EL ESTUDIO DE', pt: 'O ESTÚDIO DE', fr: 'LE STUDIO DE', it: 'LO STUDIO DI' },
   'hero.title.line2':  { en: 'LEADING', de: 'FÜHRENDE', es: 'TRANSMISIÓN DE', pt: 'TRANSMISSÃO DE', fr: 'DIFFUSION DE', it: 'TRASMISSIONE DI' },
@@ -21,22 +21,22 @@ export const translations = {
   'hero.subtitle':     { en: 'Professional broadcast production for the world\'s biggest simracing events — on TV and online, in 8 languages.', de: 'Professionelle Broadcast-Produktion für die größten Simracing-Events der Welt — im TV und online, in 8 Sprachen.', es: 'Producción profesional de transmisiones para los mayores eventos de simracing del mundo — en TV y online, en 8 idiomas.', pt: 'Produção profissional de transmissões para os maiores eventos de simracing do mundo — na TV e online, em 8 idiomas.', fr: 'Production professionnelle de diffusion pour les plus grands événements de simracing au monde — à la TV et en ligne, en 8 langues.', it: 'Produzione professionale di trasmissioni per i più grandi eventi di simracing al mondo — in TV e online, in 8 lingue.' },
 
   // ─── Stats ───────────────────────────────────────────────
-  'stats.broadcastsPerYear': { en: 'Broadcasts Per Year', de: 'Sendungen Pro Jahr', es: 'Emisiones Por Año', pt: 'Transmissões Por Ano', fr: 'Diffusions Par An', it: 'Trasmissioni All\'Anno' },
+  'stats.broadcastsPerYear': { en: 'Broadcasts Per Year', de: 'Broadcasts Pro Jahr', es: 'Emisiones Por Año', pt: 'Transmissões Por Ano', fr: 'Diffusions Par An', it: 'Trasmissioni All\'Anno' },
   'stats.impressionsPerYear': { en: 'Impressions Per Year', de: 'Impressionen Pro Jahr', es: 'Impresiones Por Año', pt: 'Impressões Por Ano', fr: 'Impressions Par An', it: 'Impressioni All\'Anno' },
   'stats.youtubeViews': { en: 'YouTube Views', de: 'YouTube Aufrufe', es: 'Vistas en YouTube', pt: 'Visualizações no YouTube', fr: 'Vues YouTube', it: 'Visualizzazioni YouTube' },
   'stats.languagesCovered': { en: 'Languages Covered', de: 'Abgedeckte Sprachen', es: 'Idiomas Cubiertos', pt: 'Idiomas Cobertos', fr: 'Langues Couvertes', it: 'Lingue Coperte' },
 
   // ─── Latest Broadcasts ───────────────────────────────────
-  'broadcasts.recentCoverage': { en: 'Recent Coverage', de: 'Aktuelle Sendungen', es: 'Cobertura Reciente', pt: 'Cobertura Recente', fr: 'Couverture Récente', it: 'Copertura Recente' },
-  'broadcasts.latestBroadcasts': { en: 'Latest Broadcasts', de: 'Neueste Sendungen', es: 'Últimas Emisiones', pt: 'Últimas Transmissões', fr: 'Dernières Diffusions', it: 'Ultime Trasmissioni' },
-  'broadcasts.viewAll': { en: 'View All Broadcasts →', de: 'Alle Sendungen →', es: 'Ver todas →', pt: 'Ver todas →', fr: 'Voir toutes →', it: 'Vedi tutte →' },
+  'broadcasts.recentCoverage': { en: 'Recent Coverage', de: 'Aktuelle Broadcasts', es: 'Cobertura Reciente', pt: 'Cobertura Recente', fr: 'Couverture Récente', it: 'Copertura Recente' },
+  'broadcasts.latestBroadcasts': { en: 'Latest Broadcasts', de: 'Neueste Broadcasts', es: 'Últimas Emisiones', pt: 'Últimas Transmissões', fr: 'Dernières Diffusions', it: 'Ultime Trasmissioni' },
+  'broadcasts.viewAll': { en: 'View All Broadcasts →', de: 'Alle Broadcasts →', es: 'Ver todas →', pt: 'Ver todas →', fr: 'Voir toutes →', it: 'Vedi tutte →' },
   'broadcasts.watchOnYT': { en: 'Watch on YouTube →', de: 'Auf YouTube ansehen →', es: 'Ver en YouTube →', pt: 'Assistir no YouTube →', fr: 'Regarder sur YouTube →', it: 'Guarda su YouTube →' },
-  'broadcasts.noBroadcasts': { en: 'No broadcasts available at the moment.', de: 'Derzeit keine Sendungen verfügbar.', es: 'No hay emisiones disponibles en este momento.', pt: 'Nenhuma transmissão disponível no momento.', fr: 'Aucune diffusion disponible pour le moment.', it: 'Nessuna trasmissione disponibile al momento.' },
+  'broadcasts.noBroadcasts': { en: 'No broadcasts available at the moment.', de: 'Derzeit keine Broadcasts verfügbar.', es: 'No hay emisiones disponibles en este momento.', pt: 'Nenhuma transmissão disponível no momento.', fr: 'Aucune diffusion disponible pour le moment.', it: 'Nessuna trasmissione disponibile al momento.' },
 
   // ─── Services ────────────────────────────────────────────
   'services.label':    { en: 'What We Do', de: 'Was Wir Tun', es: 'Lo Que Hacemos', pt: 'O Que Fazemos', fr: 'Ce Que Nous Faisons', it: 'Cosa Facciamo' },
-  'services.title':    { en: 'Our Services', de: 'Unsere Leistungen', es: 'Nuestros Servicios', pt: 'Nossos Serviços', fr: 'Nos Services', it: 'I Nostri Servizi' },
-  'services.viewAll':  { en: 'All Services →', de: 'Alle Leistungen →', es: 'Todos los servicios →', pt: 'Todos os serviços →', fr: 'Tous les services →', it: 'Tutti i servizi →' },
+  'services.title':    { en: 'Our Services', de: 'Unsere Services', es: 'Nuestros Servicios', pt: 'Nossos Serviços', fr: 'Nos Services', it: 'I Nostri Servizi' },
+  'services.viewAll':  { en: 'All Services →', de: 'Alle Services →', es: 'Todos los servicios →', pt: 'Todos os serviços →', fr: 'Tous les services →', it: 'Tutti i servizi →' },
   'services.broadcast.title':  { en: 'Broadcast Production', de: 'Broadcast-Produktion', es: 'Producción de Emisiones', pt: 'Produção de Transmissões', fr: 'Production de Diffusion', it: 'Produzione Broadcast' },
   'services.broadcast.tagline': { en: 'Online & TV — at scale.', de: 'Online & TV — in großem Maßstab.', es: 'Online y TV — a gran escala.', pt: 'Online e TV — em grande escala.', fr: 'En ligne et TV — à grande échelle.', it: 'Online e TV — su larga scala.' },
   'services.events.title':  { en: 'Live Events', de: 'Live Events', es: 'Eventos en Vivo', pt: 'Eventos ao Vivo', fr: 'Événements Live', it: 'Eventi Live' },
@@ -48,7 +48,7 @@ export const translations = {
 
   // ─── Services Page ───────────────────────────────────────
   'servicesPage.label': { en: 'What we offer', de: 'Unser Angebot', es: 'Lo que ofrecemos', pt: 'O que oferecemos', fr: 'Ce que nous offrons', it: 'Cosa offriamo' },
-  'servicesPage.title': { en: 'Services', de: 'Leistungen', es: 'Servicios', pt: 'Serviços', fr: 'Services', it: 'Servizi' },
+  'servicesPage.title': { en: 'Services', de: 'Services', es: 'Servicios', pt: 'Serviços', fr: 'Services', it: 'Servizi' },
   'servicesPage.intro': { en: '10+ years of sim racing production experience. Whether you need a full broadcast team or just hardware support, we have a solution.', de: '10+ Jahre Erfahrung in der Simracing-Produktion. Ob Sie ein komplettes Broadcast-Team oder nur Hardware-Support benötigen – wir haben die Lösung.', es: 'Más de 10 años de experiencia en producción de simracing. Ya sea que necesite un equipo de transmisión completo o solo soporte de hardware, tenemos una solución.', pt: 'Mais de 10 anos de experiência em produção de simracing. Seja para uma equipe completa de transmissão ou apenas suporte de hardware, temos uma solução.', fr: 'Plus de 10 ans d\'expérience en production de simracing. Que vous ayez besoin d\'une équipe complète ou d\'un simple support matériel, nous avons la solution.', it: 'Oltre 10 anni di esperienza nella produzione di simracing. Che tu abbia bisogno di un team broadcast completo o solo di supporto hardware, abbiamo la soluzione.' },
   'servicesPage.behindScenes': { en: 'Behind the scenes', de: 'Hinter den Kulissen', es: 'Detrás de cámaras', pt: 'Nos bastidores', fr: 'Dans les coulisses', it: 'Dietro le quinte' },
   'servicesPage.ourSetup': { en: 'How We Work', de: 'Wie wir arbeiten', es: 'Cómo Trabajamos', pt: 'Como Trabalhamos', fr: 'Comment Nous Travaillons', it: 'Come Lavoriamo' },
@@ -80,17 +80,17 @@ export const translations = {
   'live.liveChat':     { en: 'Live Chat', de: 'Live Chat', es: 'Chat en Vivo', pt: 'Chat ao Vivo', fr: 'Chat en Direct', it: 'Chat in Diretta' },
   'live.watching':     { en: 'watching', de: 'schauen zu', es: 'viendo', pt: 'assistindo', fr: 'en train de regarder', it: 'stanno guardando' },
   'live.nextUp':       { en: 'Next Up', de: 'Als Nächstes', es: 'A Continuación', pt: 'A Seguir', fr: 'Prochainement', it: 'Prossimamente' },
-  'live.upcomingBroadcast': { en: 'Upcoming Broadcast', de: 'Kommende Sendung', es: 'Próxima Emisión', pt: 'Próxima Transmissão', fr: 'Prochaine Diffusion', it: 'Prossima Trasmissione' },
+  'live.upcomingBroadcast': { en: 'Upcoming Broadcast', de: 'Kommender Broadcast', es: 'Próxima Emisión', pt: 'Próxima Transmissão', fr: 'Prochaine Diffusion', it: 'Prossima Trasmissione' },
   'live.offline':      { en: 'Currently Offline', de: 'Zurzeit Offline', es: 'Actualmente Desconectado', pt: 'Atualmente Offline', fr: 'Actuellement Hors Ligne', it: 'Attualmente Offline' },
-  'live.nextBroadcast': { en: 'Next Broadcast', de: 'Nächste Sendung', es: 'Próxima Emisión', pt: 'Próxima Transmissão', fr: 'Prochaine Diffusion', it: 'Prossima Trasmissione' },
+  'live.nextBroadcast': { en: 'Next Broadcast', de: 'Nächster Broadcast', es: 'Próxima Emisión', pt: 'Próxima Transmissão', fr: 'Prochaine Diffusion', it: 'Prossima Trasmissione' },
   'live.subscribe':    { en: 'Subscribe on YouTube', de: 'Auf YouTube abonnieren', es: 'Suscríbete en YouTube', pt: 'Inscreva-se no YouTube', fr: 'S\'abonner sur YouTube', it: 'Iscriviti su YouTube' },
   'live.viewCalendar': { en: 'View Calendar', de: 'Kalender ansehen', es: 'Ver calendario', pt: 'Ver calendário', fr: 'Voir le calendrier', it: 'Vedi calendario' },
   'live.comingSoon':   { en: 'Coming Soon', de: 'Demnächst', es: 'Próximamente', pt: 'Em Breve', fr: 'Bientôt', it: 'Prossimamente' },
-  'live.upcomingSchedule': { en: 'Upcoming Schedule', de: 'Kommende Sendungen', es: 'Próximas Emisiones', pt: 'Próximas Transmissões', fr: 'Prochaines Diffusions', it: 'Prossime Trasmissioni' },
+  'live.upcomingSchedule': { en: 'Upcoming Schedule', de: 'Kommende Broadcasts', es: 'Próximas Emisiones', pt: 'Próximas Transmissões', fr: 'Prochaines Diffusions', it: 'Prossime Trasmissioni' },
   'live.fullCalendar': { en: 'Full Calendar →', de: 'Vollständiger Kalender →', es: 'Calendario completo →', pt: 'Calendário completo →', fr: 'Calendrier complet →', it: 'Calendario completo →' },
   'live.viewFullCalendar': { en: 'View Full Calendar →', de: 'Ganzen Kalender ansehen →', es: 'Ver calendario completo →', pt: 'Ver calendário completo →', fr: 'Voir le calendrier complet →', it: 'Vedi calendario completo →' },
-  'live.noUpcoming':   { en: 'No Upcoming Broadcasts', de: 'Keine kommenden Sendungen', es: 'Sin emisiones programadas', pt: 'Sem transmissões programadas', fr: 'Aucune diffusion prévue', it: 'Nessuna trasmissione in programma' },
-  'live.noUpcomingDesc': { en: 'There are currently no broadcasts scheduled. Subscribe to our YouTube channel to be notified when we go live.', de: 'Derzeit sind keine Sendungen geplant. Abonnieren Sie unseren YouTube-Kanal, um benachrichtigt zu werden.', es: 'Actualmente no hay emisiones programadas. Suscríbete a nuestro canal de YouTube para recibir notificaciones.', pt: 'Atualmente não há transmissões programadas. Inscreva-se no nosso canal do YouTube para ser notificado.', fr: 'Aucune diffusion n\'est actuellement prévue. Abonnez-vous à notre chaîne YouTube pour être notifié.', it: 'Attualmente non ci sono trasmissioni programmate. Iscriviti al nostro canale YouTube per essere avvisato.' },
+  'live.noUpcoming':   { en: 'No Upcoming Broadcasts', de: 'Keine kommenden Broadcasts', es: 'Sin emisiones programadas', pt: 'Sem transmissões programadas', fr: 'Aucune diffusion prévue', it: 'Nessuna trasmissione in programma' },
+  'live.noUpcomingDesc': { en: 'There are currently no broadcasts scheduled. Subscribe to our YouTube channel to be notified when we go live.', de: 'Derzeit sind keine Broadcasts geplant. Abonnieren Sie unseren YouTube-Kanal, um benachrichtigt zu werden.', es: 'Actualmente no hay emisiones programadas. Suscríbete a nuestro canal de YouTube para recibir notificaciones.', pt: 'Atualmente não há transmissões programadas. Inscreva-se no nosso canal do YouTube para ser notificado.', fr: 'Aucune diffusion n\'est actuellement prévue. Abonnez-vous à notre chaîne YouTube pour être notifié.', it: 'Attualmente non ci sono trasmissioni programmate. Iscriviti al nostro canale YouTube per essere avvisato.' },
   'live.days':         { en: 'Days', de: 'Tage', es: 'Días', pt: 'Dias', fr: 'Jours', it: 'Giorni' },
   'live.hrs':          { en: 'Hrs', de: 'Std', es: 'Hrs', pt: 'Hrs', fr: 'Hrs', it: 'Ore' },
   'live.min':          { en: 'Min', de: 'Min', es: 'Min', pt: 'Min', fr: 'Min', it: 'Min' },
@@ -118,7 +118,7 @@ export const translations = {
 
   // ─── Broadcasts Page ─────────────────────────────────────
   'broadcastsPage.label': { en: 'Portfolio', de: 'Portfolio', es: 'Portafolio', pt: 'Portfólio', fr: 'Portfolio', it: 'Portfolio' },
-  'broadcastsPage.title': { en: 'Broadcasts', de: 'Sendungen', es: 'Emisiones', pt: 'Transmissões', fr: 'Diffusions', it: 'Trasmissioni' },
+  'broadcastsPage.title': { en: 'Broadcasts', de: 'Broadcasts', es: 'Emisiones', pt: 'Transmissões', fr: 'Diffusions', it: 'Trasmissioni' },
   'broadcastsPage.intro': { en: 'Over 400 live events per year across iRacing, Assetto Corsa, rFactor 2, and more — streamed online and produced for TV.', de: 'Über 400 Live-Events pro Jahr auf iRacing, Assetto Corsa, rFactor 2 und mehr — online gestreamt und fürs Fernsehen produziert.', es: 'Más de 400 eventos en vivo al año en iRacing, Assetto Corsa, rFactor 2 y más — transmitidos en línea y producidos para TV.', pt: 'Mais de 400 eventos ao vivo por ano em iRacing, Assetto Corsa, rFactor 2 e mais — transmitidos online e produzidos para TV.', fr: 'Plus de 400 événements en direct par an sur iRacing, Assetto Corsa, rFactor 2 et plus — diffusés en ligne et produits pour la TV.', it: 'Oltre 400 eventi live all\'anno su iRacing, Assetto Corsa, rFactor 2 e altro — trasmessi online e prodotti per la TV.' },
   'broadcastsPage.fullLibrary': { en: 'Full Library', de: 'Gesamte Bibliothek', es: 'Biblioteca Completa', pt: 'Biblioteca Completa', fr: 'Bibliothèque Complète', it: 'Libreria Completa' },
   'broadcastsPage.seriesPlaylists': { en: 'Series Playlists', de: 'Serien Playlisten', es: 'Listas de Series', pt: 'Playlists de Séries', fr: 'Playlists de Séries', it: 'Playlist delle Serie' },
@@ -130,12 +130,12 @@ export const translations = {
   // ─── Calendar Page ───────────────────────────────────────
   'calendar.label':    { en: 'Schedule', de: 'Zeitplan', es: 'Horario', pt: 'Programação', fr: 'Programme', it: 'Programma' },
   'calendar.title':    { en: 'Calendar', de: 'Kalender', es: 'Calendario', pt: 'Calendário', fr: 'Calendrier', it: 'Calendario' },
-  'calendar.intro':    { en: 'All upcoming Racespot broadcasts and live events. Click any event to watch on YouTube.', de: 'Alle kommenden Racespot-Sendungen und Live-Events. Klicken Sie auf ein Event, um es auf YouTube anzusehen.', es: 'Todas las próximas emisiones y eventos en vivo de Racespot. Haga clic en cualquier evento para ver en YouTube.', pt: 'Todas as próximas transmissões e eventos ao vivo da Racespot. Clique em qualquer evento para assistir no YouTube.', fr: 'Toutes les prochaines diffusions et événements en direct de Racespot. Cliquez sur un événement pour le regarder sur YouTube.', it: 'Tutte le prossime trasmissioni ed eventi live di Racespot. Clicca su un evento per guardarlo su YouTube.' },
+  'calendar.intro':    { en: 'All upcoming Racespot broadcasts and live events. Click any event to watch on YouTube.', de: 'Alle kommenden Racespot-Broadcasts und Live-Events. Klicken Sie auf ein Event, um es auf YouTube anzusehen.', es: 'Todas las próximas emisiones y eventos en vivo de Racespot. Haga clic en cualquier evento para ver en YouTube.', pt: 'Todas as próximas transmissões e eventos ao vivo da Racespot. Clique em qualquer evento para assistir no YouTube.', fr: 'Toutes les prochaines diffusions et événements en direct de Racespot. Cliquez sur un événement pour le regarder sur YouTube.', it: 'Tutte le prossime trasmissioni ed eventi live di Racespot. Clicca su un evento per guardarlo su YouTube.' },
   'calendar.calendarView': { en: 'Calendar', de: 'Kalender', es: 'Calendario', pt: 'Calendário', fr: 'Calendrier', it: 'Calendario' },
   'calendar.listView': { en: 'List', de: 'Liste', es: 'Lista', pt: 'Lista', fr: 'Liste', it: 'Lista' },
   'calendar.noEvents': { en: 'No Upcoming Events', de: 'Keine kommenden Events', es: 'Sin eventos próximos', pt: 'Sem eventos próximos', fr: 'Aucun événement prévu', it: 'Nessun evento in programma' },
-  'calendar.noEventsDesc': { en: 'There are no upcoming broadcasts scheduled at the moment. Check back soon for new events.', de: 'Derzeit sind keine Sendungen geplant. Schauen Sie bald wieder vorbei.', es: 'No hay emisiones programadas en este momento. Vuelva pronto para ver nuevos eventos.', pt: 'Não há transmissões programadas no momento. Volte em breve para novos eventos.', fr: 'Aucune diffusion n\'est prévue pour le moment. Revenez bientôt.', it: 'Non ci sono trasmissioni programmate al momento. Torna presto per nuovi eventi.' },
-  'calendar.liveNow':  { en: 'broadcast(s) live now', de: 'Sendung(en) jetzt live', es: 'emisión(es) en vivo ahora', pt: 'transmissão(ões) ao vivo agora', fr: 'diffusion(s) en direct maintenant', it: 'trasmissione/i in diretta ora' },
+  'calendar.noEventsDesc': { en: 'There are no upcoming broadcasts scheduled at the moment. Check back soon for new events.', de: 'Derzeit sind keine Broadcasts geplant. Schauen Sie bald wieder vorbei.', es: 'No hay emisiones programadas en este momento. Vuelva pronto para ver nuevos eventos.', pt: 'Não há transmissões programadas no momento. Volte em breve para novos eventos.', fr: 'Aucune diffusion n\'est prévue pour le moment. Revenez bientôt.', it: 'Non ci sono trasmissioni programmate al momento. Torna presto per nuovi eventi.' },
+  'calendar.liveNow':  { en: 'broadcast(s) live now', de: 'Broadcast(s) jetzt live', es: 'emisión(es) en vivo ahora', pt: 'transmissão(ões) ao vivo agora', fr: 'diffusion(s) en direct maintenant', it: 'trasmissione/i in diretta ora' },
   'calendar.watch':    { en: 'Watch →', de: 'Ansehen →', es: 'Ver →', pt: 'Assistir →', fr: 'Regarder →', it: 'Guarda →' },
   'calendar.timezoneNote': { en: 'Schedule updates every 5 minutes · Times shown in your local timezone', de: 'Zeitplan aktualisiert sich alle 5 Minuten · Zeiten in Ihrer lokalen Zeitzone', es: 'El horario se actualiza cada 5 minutos · Horarios en su zona horaria local', pt: 'A programação é atualizada a cada 5 minutos · Horários no seu fuso horário local', fr: 'Le programme est mis à jour toutes les 5 minutes · Heures dans votre fuseau horaire local', it: 'Il programma si aggiorna ogni 5 minuti · Orari nel tuo fuso orario locale' },
 
@@ -227,7 +227,7 @@ export const translations = {
 
   // ─── Footer ──────────────────────────────────────────────
   'footer.description': { en: 'The world\'s leading simracing broadcast studio. Based in Cologne, Germany. Broadcasting globally since 2013.', de: 'Das weltweit führende Simracing-Broadcast-Studio. Mit Sitz in Köln, Deutschland. Seit 2013 weltweit auf Sendung.', es: 'El estudio de transmisión de simracing líder en el mundo. Con sede en Colonia, Alemania. Transmitiendo globalmente desde 2013.', pt: 'O estúdio de transmissão de simracing líder mundial. Sediado em Colônia, Alemanha. Transmitindo globalmente desde 2013.', fr: 'Le studio de diffusion de simracing leader mondial. Basé à Cologne, en Allemagne. Diffusion mondiale depuis 2013.', it: 'Lo studio di trasmissione di simracing leader nel mondo. Con sede a Colonia, Germania. In onda nel mondo dal 2013.' },
-  'footer.broadcasts': { en: 'Broadcasts', de: 'Sendungen', es: 'Emisiones', pt: 'Transmissões', fr: 'Diffusions', it: 'Trasmissioni' },
+  'footer.broadcasts': { en: 'Broadcasts', de: 'Broadcasts', es: 'Emisiones', pt: 'Transmissões', fr: 'Diffusions', it: 'Trasmissioni' },
   'footer.company':    { en: 'Company', de: 'Unternehmen', es: 'Empresa', pt: 'Empresa', fr: 'Entreprise', it: 'Azienda' },
   'footer.aboutUs':    { en: 'About Us', de: 'Über uns', es: 'Sobre nosotros', pt: 'Sobre nós', fr: 'À propos', it: 'Chi siamo' },
   'footer.contact':    { en: 'Contact', de: 'Kontakt', es: 'Contacto', pt: 'Contato', fr: 'Contact', it: 'Contatto' },
