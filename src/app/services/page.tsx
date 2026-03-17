@@ -98,7 +98,7 @@ export default function ServicesPage() {
       {/* Hero Banner */}
       <div className="relative h-[300px] md:h-[400px] overflow-hidden">
         <Image
-          src="/images/setup/WhatsApp Image 2026-03-13 at 09.38.14.jpeg"
+          src="/images/setup/broadcast-control-room.jpg"
           alt="Racespot broadcast production team"
           fill
           className="object-cover object-center"
