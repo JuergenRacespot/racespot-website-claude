@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ARTICLES, CATEGORY_COLORS } from '@/lib/articles'
+import { ArticleJsonLd } from '@/components/seo/JsonLd'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -19,6 +20,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: article.title,
     description: article.excerpt,
+    openGraph: {
+      title: `${article.title} | Racespot.tv`,
+      description: article.excerpt,
+      type: 'article',
+      images: [{ url: article.image, width: 1200, height: 630, alt: article.imageAlt }],
+    },
+    twitter: { card: 'summary_large_image', images: [article.image] },
   }
 }
 
@@ -33,6 +41,13 @@ export default async function ArticlePage({ params }: Props) {
 
   return (
     <div>
+      <ArticleJsonLd
+        title={article.title}
+        description={article.excerpt}
+        image={article.image}
+        datePublished={article.date}
+        slug={article.slug}
+      />
       {/* Hero image */}
       <div className="relative h-[300px] md:h-[400px] overflow-hidden">
         <Image

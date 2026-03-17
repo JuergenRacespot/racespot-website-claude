@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/Footer'
 import { LanguageProvider } from '@/lib/language'
 import { getLiveStream, getLiveStreamViaSearch } from '@/lib/youtube'
 import { getUpcomingEvents } from '@/lib/sheets'
+import { OrganizationJsonLd, WebsiteJsonLd } from '@/components/seo/JsonLd'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
     siteName: 'Racespot.tv',
     images: [
       {
-        url: '/og-image.jpg',
+        url: '/og-home.jpg',
         width: 1200,
         height: 630,
         alt: "Racespot.tv — World's Leading Simracing Broadcast Studio",
@@ -58,8 +59,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    images: ['/og-image.jpg'],
+    images: ['/og-home.jpg'],
   },
+  metadataBase: new URL('https://racespot.tv'),
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -80,6 +82,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={`${inter.variable} ${oswald.variable}`}>
+      <head>
+        <OrganizationJsonLd />
+        <WebsiteJsonLd />
+      </head>
       <body className="bg-rs-black text-white">
         <LanguageProvider>
           <Header isLive={isLive} />

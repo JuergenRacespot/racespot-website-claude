@@ -6,6 +6,12 @@ import { ARTICLES, CATEGORY_COLORS } from '@/lib/articles'
 export const metadata: Metadata = {
   title: 'News',
   description: 'Latest news, insights, and updates from Racespot — the simracing broadcast team.',
+  openGraph: {
+    title: 'News | Racespot.tv',
+    description: 'Latest news, insights, and updates from Racespot — the simracing broadcast team.',
+    images: [{ url: '/og-news.jpg', width: 1200, height: 630, alt: 'Racespot news' }],
+  },
+  twitter: { card: 'summary_large_image', images: ['/og-news.jpg'] },
 }
 
 export default function NewsPage() {

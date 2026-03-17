@@ -1,0 +1,110 @@
+/**
+ * JSON-LD Structured Data for SEO
+ * Renders schema.org markup in the page head
+ */
+
+export function OrganizationJsonLd() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Racespot Media House GmbH',
+    alternateName: 'Racespot.tv',
+    url: 'https://racespot.tv',
+    logo: 'https://racespot.tv/icon-512.png',
+    image: 'https://racespot.tv/og-home.jpg',
+    description:
+      "World's leading simracing broadcast studio. 400+ live events per year across iRacing, Assetto Corsa, rFactor 2 and more.",
+    foundingDate: '2013',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Cologne',
+      addressCountry: 'DE',
+    },
+    sameAs: [
+      'https://www.youtube.com/@Racespot',
+      'https://twitter.com/raboracespot',
+    ],
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'info@racespot.tv',
+      contactType: 'customer service',
+    },
+    knowsAbout: [
+      'Sim Racing',
+      'Esports Broadcasting',
+      'Live Event Production',
+      'iRacing',
+      'Motorsport',
+    ],
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+export function WebsiteJsonLd() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Racespot.tv',
+    url: 'https://racespot.tv',
+    description:
+      "World's leading simracing broadcast studio. Professional broadcast production for simracing events.",
+    publisher: {
+      '@type': 'Organization',
+      name: 'Racespot Media House GmbH',
+    },
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+interface ArticleJsonLdProps {
+  title: string
+  description: string
+  image: string
+  datePublished: string
+  slug: string
+}
+
+export function ArticleJsonLd({ title, description, image, datePublished, slug }: ArticleJsonLdProps) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: title,
+    description,
+    image: `https://racespot.tv${image}`,
+    datePublished,
+    dateModified: datePublished,
+    url: `https://racespot.tv/news/${slug}`,
+    author: {
+      '@type': 'Organization',
+      name: 'Racespot Media House GmbH',
+      url: 'https://racespot.tv',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Racespot.tv',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://racespot.tv/icon-512.png',
+      },
+    },
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}

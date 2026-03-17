@@ -6,7 +6,13 @@ import { T } from '@/components/ui/T'
 
 export const metadata: Metadata = {
   title: 'Events',
-  description: 'Upcoming and past live sim racing events — including RACE WEEK 2026 in Cologne.',
+  description: 'Upcoming and past live sim racing events produced by Racespot — the leading simracing broadcast studio.',
+  openGraph: {
+    title: 'Events | Racespot.tv',
+    description: 'Upcoming and past live sim racing events produced by Racespot.',
+    images: [{ url: '/og-events.jpg', width: 1200, height: 630, alt: 'Racespot live events' }],
+  },
+  twitter: { card: 'summary_large_image', images: ['/og-events.jpg'] },
 }
 
 // Hidden until ready to announce publicly
