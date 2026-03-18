@@ -86,7 +86,7 @@ export function LiveEmbed({ liveStreams: initialStreams, upcomingEvents = [] }: 
 
         {/* Stream tabs — shown directly above video for 2+ streams */}
         {liveStreams.length > 1 && (
-          <div className="flex gap-0 border-b border-rs-border mb-0">
+          <div className="flex gap-0 border-b border-rs-border mb-0 overflow-x-auto scrollbar-hide">
             {liveStreams.map((stream) => {
               const isActive = stream.id === activeStream.id
               return (
@@ -94,7 +94,7 @@ export function LiveEmbed({ liveStreams: initialStreams, upcomingEvents = [] }: 
                   key={stream.id}
                   onClick={() => setActiveId(stream.id)}
                   className={`relative flex items-center gap-2 px-4 py-3 text-sm font-display font-bold
-                    transition-colors min-w-0 max-w-[50%]
+                    transition-colors min-w-0 flex-1
                     ${isActive
                       ? 'text-white'
                       : 'text-rs-muted hover:text-white/80'
