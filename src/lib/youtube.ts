@@ -169,18 +169,23 @@ function rssToYouTubeVideo(rss: RSSVideoData): YouTubeVideo {
 async function getVideoDetails(videoIds: string[], revalidate = CACHE_24H): Promise<YouTubeVideo[]> {
   if (!videoIds.length || !API_KEY) return []
 
-  const url = `${BASE_URL}/videos?part=snippet,statistics,contentDetails&id=${videoIds.join(',')}&key=${API_KEY}`
-  const res = await fetch(url, { next: { revalidate } })
+  try {
+    const url = `${BASE_URL}/videos?part=snippet,statistics,contentDetails&id=${videoIds.join(',')}&key=${API_KEY}`
+    const res = await fetch(url, { next: { revalidate } })
 
-  if (!res.ok) {
-    console.error('YouTube videos API error:', res.status)
+    if (!res.ok) {
+      console.error('YouTube videos API error:', res.status)
+      return [] // Caller (getLatestVideos/getCompletedBroadcasts) falls back to RSS
+    }
+
+    const data = await res.json()
+    if (!data.items?.length) return []
+
+    return data.items.map(mapVideoItem)
+  } catch (error) {
+    console.error('YouTube video details error:', error)
     return []
   }
-
-  const data = await res.json()
-  if (!data.items?.length) return []
-
-  return data.items.map(mapVideoItem)
 }
 
 // ─── Public API ─────────────────────────────────────────────
@@ -403,14 +408,46 @@ export async function getLiveStreamViaSearch(): Promise<YouTubeLiveStream | null
   return streams[0] ?? null
 }
 
+// ─── Playlist cache (survives API quota exhaustion) ──────────
+
+const PLAYLIST_CACHE_PATH = '/tmp/racespot-playlists-cache.json'
+
+function readPlaylistCache(): YouTubePlaylist[] | null {
+  if (typeof window !== 'undefined') return null // client-side: no fs
+  try {
+    // Dynamic require to avoid webpack bundling fs for client
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs')
+    const raw = fs.readFileSync(PLAYLIST_CACHE_PATH, 'utf-8')
+    return JSON.parse(raw) as YouTubePlaylist[]
+  } catch {
+    return null
+  }
+}
+
+function writePlaylistCache(playlists: YouTubePlaylist[]): void {
+  if (typeof window !== 'undefined') return
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs')
+    fs.writeFileSync(PLAYLIST_CACHE_PATH, JSON.stringify(playlists))
+  } catch {
+    // Silently ignore write errors
+  }
+}
+
 /**
  * Fetch all public playlists from the channel.
  * Cost: 1 unit. Cached for 24 hours.
+ *
+ * Fallback chain when API fails (e.g. quota exceeded):
+ *   1. File cache (/tmp) — last successful API response, survives within container
+ *   2. Returns [] — BroadcastsClient shows "no playlists" message
  */
 export async function getChannelPlaylists(maxResults = 50): Promise<YouTubePlaylist[]> {
   if (!API_KEY || !CHANNEL_ID) {
     console.warn('YouTube API key or Channel ID not configured')
-    return []
+    return readPlaylistCache() || []
   }
 
   try {
@@ -419,13 +456,19 @@ export async function getChannelPlaylists(maxResults = 50): Promise<YouTubePlayl
 
     if (!res.ok) {
       console.error('YouTube playlists API error:', res.status)
+      // API failed (quota, auth, etc.) — try file cache
+      const cached = readPlaylistCache()
+      if (cached) {
+        console.log(`Serving ${cached.length} playlists from cache (API returned ${res.status})`)
+        return cached
+      }
       return []
     }
 
     const data = await res.json()
-    if (!data.items?.length) return []
+    if (!data.items?.length) return readPlaylistCache() || []
 
-    return data.items
+    const playlists = data.items
       .filter((item: { contentDetails: { itemCount: number } }) => item.contentDetails.itemCount > 0)
       .map((item: {
         id: string
@@ -445,8 +488,19 @@ export async function getChannelPlaylists(maxResults = 50): Promise<YouTubePlayl
         itemCount: item.contentDetails.itemCount,
         publishedAt: item.snippet.publishedAt,
       })) as YouTubePlaylist[]
+
+    // Persist to file cache for quota-exceeded fallback
+    writePlaylistCache(playlists)
+
+    return playlists
   } catch (error) {
     console.error('YouTube playlists error:', error)
+    // Network error or parsing failure — try file cache
+    const cached = readPlaylistCache()
+    if (cached) {
+      console.log(`Serving ${cached.length} playlists from cache (caught error)`)
+      return cached
+    }
     return []
   }
 }
