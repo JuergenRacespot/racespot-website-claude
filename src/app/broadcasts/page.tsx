@@ -161,11 +161,13 @@ export default async function BroadcastsPage() {
           )}
         </div>
 
-        {/* Divider */}
-        <div className="divider mb-20" />
-
-        {/* Playlists section */}
-        <BroadcastsClient playlists={enriched} families={families} />
+        {/* Playlists section — hidden when YouTube API is unavailable */}
+        {enriched.length > 0 && (
+          <>
+            <div className="divider mb-20" />
+            <BroadcastsClient playlists={enriched} families={families} />
+          </>
+        )}
       </div>
     </div>
   )
