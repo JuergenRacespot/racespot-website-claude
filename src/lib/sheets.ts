@@ -101,9 +101,11 @@ function parseRow(row: (string | number)[]): ScheduleEvent | null {
   const now = new Date()
 
   // Determine status
-  const isLive = now >= eventDate && now <= endDate
+  // Add 90-minute buffer after scheduled end — broadcasts often run overtime
+  const liveBuffer = new Date(endDate.getTime() + 90 * 60 * 1000)
+  const isLive = now >= eventDate && now <= liveBuffer
   const isUpcoming = eventDate > now
-  const isPast = now > endDate
+  const isPast = now > liveBuffer
 
   return {
     id: String(row[17] || Math.random()),
