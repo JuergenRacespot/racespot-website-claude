@@ -270,9 +270,11 @@ export async function getLiveStreams(): Promise<YouTubeLiveStream[]> {
 
   try {
     // Tier 1: Free scrape check — is the channel live at all?
+    // Use cache: 'no-store' to avoid Next.js Response.clone errors
+    // (body consumed by .text() can't be cloned for caching)
     const channelUrl = `https://www.youtube.com/channel/${CHANNEL_ID}/live`
     const scrapeRes = await fetch(channelUrl, {
-      next: { revalidate: CACHE_LIVE },
+      cache: 'no-store',
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Racespot/1.0)',
       },
