@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import type { YouTubeLiveStream } from '@/lib/youtube'
 import { formatViewCount } from '@/lib/youtube'
@@ -18,18 +18,50 @@ interface LiveEmbedProps {
   upcomingEvents?: SerializedEvent[]
 }
 
-export function LiveEmbed({ liveStreams, upcomingEvents = [] }: LiveEmbedProps) {
+const POLL_INTERVAL = 30_000 // 30 seconds
+
+export function LiveEmbed({ liveStreams: initialStreams, upcomingEvents = [] }: LiveEmbedProps) {
   const t = useTranslation()
-  const [activeIndex, setActiveIndex] = useState(0)
+  const [liveStreams, setLiveStreams] = useState(initialStreams)
+  const [activeId, setActiveId] = useState(initialStreams[0]?.id || '')
 
-  // Clamp index if streams array changes
-  const safeIndex = Math.min(activeIndex, liveStreams.length - 1)
-  const activeStream = liveStreams[safeIndex]
+  // Poll for stream updates
+  const pollStreams = useCallback(async () => {
+    try {
+      const res = await fetch('/api/live-streams')
+      if (!res.ok) return
+      const data = await res.json()
+      const streams: YouTubeLiveStream[] = data.streams || []
 
+      if (streams.length === 0) {
+        // All streams ended — full page reload to show offline state
+        window.location.reload()
+        return
+      }
+
+      setLiveStreams(streams)
+
+      // If active stream is no longer live, switch to the first available
+      setActiveId(prev => {
+        const stillLive = streams.find(s => s.id === prev)
+        if (stillLive) return prev
+        return streams[0].id
+      })
+    } catch {
+      // Silently ignore poll errors
+    }
+  }, [])
+
+  useEffect(() => {
+    const interval = setInterval(pollStreams, POLL_INTERVAL)
+    return () => clearInterval(interval)
+  }, [pollStreams])
+
+  // Find the active stream
+  const activeStream = liveStreams.find(s => s.id === activeId) || liveStreams[0]
   if (!activeStream) return null
 
   const embedUrl = `https://www.youtube.com/embed/${activeStream.id}?autoplay=1&modestbranding=1&rel=0`
-  const chatVideoId = activeStream.id
 
   return (
     <div className="pt-8 min-h-screen">
@@ -52,52 +84,55 @@ export function LiveEmbed({ liveStreams, upcomingEvents = [] }: LiveEmbedProps) 
         </div>
         <h1 className="display-title mb-8">{t('live.liveNow')}</h1>
 
-        {/* Stream selector — only shown for 2+ streams */}
+        {/* Stream selector — always shown for 2+ streams */}
         {liveStreams.length > 1 && (
           <div className="mb-6">
             <p className="text-xs font-display font-bold uppercase tracking-wider text-rs-muted mb-3">
               {t('live.selectStream')}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {liveStreams.map((stream, i) => (
-                <button
-                  key={stream.id}
-                  onClick={() => setActiveIndex(i)}
-                  className={`flex items-center gap-3 p-4 rounded-rs border text-left transition-all
-                    ${i === safeIndex
-                      ? 'border-rs-yellow bg-rs-yellow/10'
-                      : 'border-rs-border bg-rs-dark hover:border-rs-yellow/40'
-                    }`}
-                >
-                  <div className="shrink-0">
-                    {i === safeIndex ? (
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rs-yellow text-rs-black text-sm font-display font-bold">
-                        ▶
-                      </span>
-                    ) : (
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-rs-border text-rs-muted text-sm font-display font-bold">
-                        {i + 1}
-                      </span>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className={`font-semibold text-sm truncate ${i === safeIndex ? 'text-white' : 'text-rs-muted'}`}>
-                      {stream.title}
-                    </p>
-                    {parseInt(stream.concurrentViewers) > 0 && (
-                      <p className="text-xs text-rs-muted">
-                        {formatViewCount(stream.concurrentViewers)} {t('live.watching')}
+              {liveStreams.map((stream) => {
+                const isActive = stream.id === activeStream.id
+                return (
+                  <button
+                    key={stream.id}
+                    onClick={() => setActiveId(stream.id)}
+                    className={`flex items-center gap-3 p-4 rounded-rs border text-left transition-all
+                      ${isActive
+                        ? 'border-rs-yellow bg-rs-yellow/10'
+                        : 'border-rs-border bg-rs-dark hover:border-rs-yellow/40'
+                      }`}
+                  >
+                    <div className="shrink-0">
+                      {isActive ? (
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rs-yellow text-rs-black text-sm font-display font-bold">
+                          ▶
+                        </span>
+                      ) : (
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-rs-border text-rs-muted text-sm font-display font-bold">
+                          ▶
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-semibold text-sm truncate ${isActive ? 'text-white' : 'text-rs-muted'}`}>
+                        {stream.title}
                       </p>
+                      {parseInt(stream.concurrentViewers) > 0 && (
+                        <p className="text-xs text-rs-muted">
+                          {formatViewCount(stream.concurrentViewers)} {t('live.watching')}
+                        </p>
+                      )}
+                    </div>
+                    {isActive && (
+                      <span className="badge-live shrink-0 text-[10px]">
+                        <span className="w-1 h-1 rounded-full bg-white animate-pulse-live" />
+                        LIVE
+                      </span>
                     )}
-                  </div>
-                  {i === safeIndex && (
-                    <span className="badge-live shrink-0 text-[10px]">
-                      <span className="w-1 h-1 rounded-full bg-white animate-pulse-live" />
-                      LIVE
-                    </span>
-                  )}
-                </button>
-              ))}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
@@ -131,22 +166,20 @@ export function LiveEmbed({ liveStreams, upcomingEvents = [] }: LiveEmbedProps) 
         </div>
 
         {/* Chat embed */}
-        {chatVideoId && (
-          <div className="border border-rs-border rounded-rs overflow-hidden">
-            <div className="bg-rs-dark px-4 py-2.5 border-b border-rs-border">
-              <p className="text-xs font-display font-bold uppercase tracking-wider text-rs-muted">
-                {t('live.liveChat')}
-              </p>
-            </div>
-            <div className="relative h-[400px] lg:h-[500px]">
-              <iframe
-                key={`chat-${activeStream.id}`}
-                src={`https://www.youtube.com/live_chat?v=${chatVideoId}&embed_domain=racespot.tv`}
-                className="absolute inset-0 w-full h-full"
-              />
-            </div>
+        <div className="border border-rs-border rounded-rs overflow-hidden">
+          <div className="bg-rs-dark px-4 py-2.5 border-b border-rs-border">
+            <p className="text-xs font-display font-bold uppercase tracking-wider text-rs-muted">
+              {t('live.liveChat')}
+            </p>
           </div>
-        )}
+          <div className="relative h-[400px] lg:h-[500px]">
+            <iframe
+              key={`chat-${activeStream.id}`}
+              src={`https://www.youtube.com/live_chat?v=${activeStream.id}&embed_domain=racespot.tv`}
+              className="absolute inset-0 w-full h-full"
+            />
+          </div>
+        </div>
 
         {/* Upcoming schedule */}
         {upcomingEvents.length > 0 && (

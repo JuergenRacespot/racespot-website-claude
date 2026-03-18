@@ -50,14 +50,23 @@ export function Hero({ isLive = false, liveTitles = [], nextEventSeries, nextEve
         <div className="max-w-[700px]">
           {/* Live / Upcoming badge */}
           {isLive && hasMultipleStreams ? (
-            <Link href="/live" className="flex items-center gap-3 mb-5 md:mb-8 group">
-              <span className="badge-live">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-live" />
-                {t('hero.liveNow')}
-              </span>
-              <span className="text-white/60 text-sm group-hover:text-white transition-colors">
-                {liveTitles.length} {t('live.multipleStreams')}
-              </span>
+            <Link href="/live" className="flex flex-col gap-2 mb-5 md:mb-8 group">
+              <div className="flex items-center gap-3">
+                <span className="badge-live">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-live" />
+                  {t('hero.liveNow')}
+                </span>
+                <span className="bg-rs-live/20 text-rs-live text-[11px] font-display font-bold px-2 py-0.5 rounded-full">
+                  {liveTitles.length}
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5 pl-0.5">
+                {liveTitles.map((title, i) => (
+                  <span key={i} className="text-white/60 text-sm group-hover:text-white transition-colors line-clamp-1">
+                    {title}
+                  </span>
+                ))}
+              </div>
             </Link>
           ) : isLive && singleTitle ? (
             <Link href="/live" className="flex items-center gap-3 mb-5 md:mb-8 group">

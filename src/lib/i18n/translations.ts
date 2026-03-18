@@ -75,7 +75,7 @@ export const translations = {
   'cta.viewWork':      { en: 'View Our Work', de: 'Unsere Arbeit ansehen', es: 'Ver nuestro trabajo', pt: 'Ver nosso trabalho', fr: 'Voir nos réalisations', it: 'Vedi i nostri lavori' },
 
   // ─── Live Page ───────────────────────────────────────────
-  'live.onAir':        { en: 'On Air', de: 'Auf Sendung', es: 'En el Aire', pt: 'No Ar', fr: 'À l\'Antenne', it: 'In Onda' },
+  'live.onAir':        { en: 'On Air', de: 'On Air', es: 'On Air', pt: 'On Air', fr: 'On Air', it: 'On Air' },
   'live.liveNow':      { en: 'Live Now', de: 'Jetzt Live', es: 'En Vivo Ahora', pt: 'Ao Vivo Agora', fr: 'En Direct Maintenant', it: 'In Diretta Ora' },
   'live.liveChat':     { en: 'Live Chat', de: 'Live Chat', es: 'Chat en Vivo', pt: 'Chat ao Vivo', fr: 'Chat en Direct', it: 'Chat in Diretta' },
   'live.watching':     { en: 'watching', de: 'schauen zu', es: 'viendo', pt: 'assistindo', fr: 'en train de regarder', it: 'stanno guardando' },
