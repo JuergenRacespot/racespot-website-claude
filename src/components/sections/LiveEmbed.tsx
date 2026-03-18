@@ -84,61 +84,42 @@ export function LiveEmbed({ liveStreams: initialStreams, upcomingEvents = [] }: 
         </div>
         <h1 className="display-title mb-8">{t('live.liveNow')}</h1>
 
-        {/* Stream selector — always shown for 2+ streams */}
+        {/* Stream tabs — shown directly above video for 2+ streams */}
         {liveStreams.length > 1 && (
-          <div className="mb-6">
-            <p className="text-xs font-display font-bold uppercase tracking-wider text-rs-muted mb-3">
-              {t('live.selectStream')}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {liveStreams.map((stream) => {
-                const isActive = stream.id === activeStream.id
-                return (
-                  <button
-                    key={stream.id}
-                    onClick={() => setActiveId(stream.id)}
-                    className={`flex items-center gap-3 p-4 rounded-rs border text-left transition-all
-                      ${isActive
-                        ? 'border-rs-yellow bg-rs-yellow/10'
-                        : 'border-rs-border bg-rs-dark hover:border-rs-yellow/40'
-                      }`}
-                  >
-                    <div className="shrink-0">
-                      {isActive ? (
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rs-yellow text-rs-black text-sm font-display font-bold">
-                          ▶
-                        </span>
-                      ) : (
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-rs-border text-rs-muted text-sm font-display font-bold">
-                          ▶
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={`font-semibold text-sm truncate ${isActive ? 'text-white' : 'text-rs-muted'}`}>
-                        {stream.title}
-                      </p>
-                      {parseInt(stream.concurrentViewers) > 0 && (
-                        <p className="text-xs text-rs-muted">
-                          {formatViewCount(stream.concurrentViewers)} {t('live.watching')}
-                        </p>
-                      )}
-                    </div>
-                    {isActive && (
-                      <span className="badge-live shrink-0 text-[10px]">
-                        <span className="w-1 h-1 rounded-full bg-white animate-pulse-live" />
-                        LIVE
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+          <div className="flex gap-0 border-b border-rs-border mb-0">
+            {liveStreams.map((stream) => {
+              const isActive = stream.id === activeStream.id
+              return (
+                <button
+                  key={stream.id}
+                  onClick={() => setActiveId(stream.id)}
+                  className={`relative flex items-center gap-2 px-4 py-3 text-sm font-display font-bold
+                    transition-colors min-w-0 max-w-[50%]
+                    ${isActive
+                      ? 'text-white'
+                      : 'text-rs-muted hover:text-white/80'
+                    }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-rs-live animate-pulse-live' : 'bg-rs-muted/50'}`} />
+                  <span className="truncate">{stream.title}</span>
+                  {parseInt(stream.concurrentViewers) > 0 && (
+                    <span className="text-[11px] text-rs-muted font-normal shrink-0">
+                      {formatViewCount(stream.concurrentViewers)}
+                    </span>
+                  )}
+                  {/* Active indicator bar */}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-rs-yellow" />
+                  )}
+                </button>
+              )
+            })}
           </div>
         )}
 
         {/* Main embed */}
-        <div className="relative aspect-video bg-rs-dark border border-rs-border rounded-rs overflow-hidden mb-6">
+        <div className={`relative aspect-video bg-rs-dark border border-rs-border overflow-hidden mb-6
+          ${liveStreams.length > 1 ? 'rounded-b-rs border-t-0' : 'rounded-rs'}`}>
           <iframe
             key={activeStream.id}
             src={embedUrl}
