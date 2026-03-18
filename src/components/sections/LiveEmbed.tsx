@@ -93,7 +93,7 @@ export function LiveEmbed({ liveStreams: initialStreams, upcomingEvents = [] }: 
                 <button
                   key={stream.id}
                   onClick={() => setActiveId(stream.id)}
-                  className={`relative flex items-center gap-2 px-4 py-3 text-sm font-display font-bold
+                  className={`relative flex items-center gap-2 px-4 py-3 text-xs font-display font-bold
                     transition-colors min-w-0 flex-1
                     ${isActive
                       ? 'text-white'
