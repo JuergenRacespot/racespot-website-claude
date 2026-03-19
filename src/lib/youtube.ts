@@ -342,11 +342,15 @@ export async function getLiveStreams(): Promise<YouTubeLiveStream[]> {
  * This works from ANY server — no scraping, no IP blocking issues.
  */
 async function detectLiveViaRSS(): Promise<YouTubeLiveStream[]> {
-  if (!LIVE_API_KEY || !CHANNEL_ID) return []
+  if (!LIVE_API_KEY || !CHANNEL_ID) {
+    console.warn('[Live] detectLiveViaRSS: missing LIVE_API_KEY or CHANNEL_ID')
+    return []
+  }
 
   try {
     // Step 1: Get recent video IDs from free RSS feed
     const rssVideos = await getVideosFromRSS()
+    console.log(`[Live] RSS feed returned ${rssVideos.length} videos: ${rssVideos.map(v => v.id).join(',')}`)
     if (rssVideos.length === 0) return []
 
     // Step 2: Check liveBroadcastContent via videos.list (1 unit for all IDs)
@@ -356,12 +360,13 @@ async function detectLiveViaRSS(): Promise<YouTubeLiveStream[]> {
     const res = await fetch(url, { next: { revalidate: CACHE_LIVE } })
 
     if (!res.ok) {
-      console.warn('[Live] RSS videos.list check failed:', res.status)
+      console.warn(`[Live] RSS videos.list check failed: ${res.status} ${res.statusText}`)
       return []
     }
 
     const data = await res.json()
     const items = data.items || []
+    console.log(`[Live] videos.list returned ${items.length} items, broadcast states: ${items.map((i: { id: string; snippet: { liveBroadcastContent: string } }) => `${i.id}=${i.snippet.liveBroadcastContent}`).join(', ')}`)
 
     // Step 3: Filter to currently live streams
     const liveItems = items.filter(
@@ -369,7 +374,10 @@ async function detectLiveViaRSS(): Promise<YouTubeLiveStream[]> {
         item.snippet.liveBroadcastContent === 'live'
     )
 
-    if (liveItems.length === 0) return []
+    if (liveItems.length === 0) {
+      console.log('[Live] No live streams found in RSS videos')
+      return []
+    }
 
     // Step 4: Map to YouTubeLiveStream format
     return liveItems.map((item: {
