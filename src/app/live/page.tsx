@@ -40,15 +40,13 @@ export default async function LivePage() {
       tier: e.tier,
     }))
 
-  // If YouTube scraping found live streams, show them
+  // Primary detection (RSS+videos.list → scraping → Search API) found streams
   if (liveStreams.length > 0) {
     return <LiveEmbed liveStreams={liveStreams} upcomingEvents={upcomingEvents} />
   }
 
-  // Scraping failed (cloud IP blocked) or returned nothing.
-  // If Sheets says we're live (or recently live — includes 90min overtime buffer),
-  // use the Search API as fallback (100 units, cached 60s).
-  // This handles: cloud environments where scraping always fails + overtime broadcasts.
+  // Fallback: Sheets says we should be live but primary detection failed.
+  // Try Search API as last resort (handles newly created streams not yet in RSS).
   if (liveEvents.length > 0) {
     const searchResults = await getLiveStreamsViaSearch()
     if (searchResults.length > 0) {

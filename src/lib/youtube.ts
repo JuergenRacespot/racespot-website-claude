@@ -262,79 +262,69 @@ export async function getCompletedBroadcasts(maxResults = 6): Promise<YouTubeVid
 /**
  * Check if channel is currently live streaming and return ALL live streams.
  *
- * Three-tier approach for multi-stream support:
- *   Tier 1 (0 units): Scrape channel page for live indicator (just a yes/no check)
- *   Tier 2 (100 units): If live, use Search API to find ALL concurrent live streams
- *   Tier 3 (1 unit): Fetch details for all found streams via videos.list
+ * Four-tier approach for reliable multi-stream detection:
+ *   Tier 1 (1 unit):   RSS + videos.list — check recent video IDs for liveBroadcastContent
+ *                       Works from ANY server (no IP blocking), most reliable method.
+ *   Tier 2 (0 units):  Scrape channel page for live indicator (fails on cloud IPs)
+ *   Tier 3 (100 units): Search API to find ALL concurrent live streams
+ *   Tier 4 (1 unit):   videos.list for details on found streams
  *
- * When offline (99%+ of the time): 0 units.
- * When live: 101 units (search + details), cached for 60 seconds.
+ * When offline: 1 unit (RSS check, cached 60s).
+ * When live: 1-102 units depending on which tier detects it.
  */
 export async function getLiveStreams(): Promise<YouTubeLiveStream[]> {
   if (!CHANNEL_ID) return []
 
   try {
-    // Tier 1: Free scrape check — is the channel live at all?
-    // Use cache: 'no-store' to avoid Next.js Response.clone errors
-    // (body consumed by .text() can't be cloned for caching)
+    // ── Tier 1: RSS + videos.list (1 unit, works from any IP) ──
+    // Get recent video IDs from free RSS feed, then check liveBroadcastContent
+    const rssLiveStreams = await detectLiveViaRSS()
+    if (rssLiveStreams.length > 0) {
+      console.log(`[Live] Tier 1 (RSS): Found ${rssLiveStreams.length} live stream(s)`)
+      return rssLiveStreams
+    }
+
+    // ── Tier 2: Free scrape check (0 units, blocked on some cloud IPs) ──
     const channelUrl = `https://www.youtube.com/channel/${CHANNEL_ID}/live`
-    const scrapeRes = await fetch(channelUrl, {
-      cache: 'no-store',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Racespot/1.0)',
-      },
-    })
+    let scrapeFoundLive = false
+    try {
+      const scrapeRes = await fetch(channelUrl, {
+        cache: 'no-store',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+      })
 
-    if (!scrapeRes.ok) return []
+      if (scrapeRes.ok) {
+        const html = await scrapeRes.text()
+        scrapeFoundLive = html.includes('"isLive":true') || html.includes('"style":"LIVE"')
+      }
+    } catch {
+      // Scraping blocked — continue to next tier
+    }
 
-    const html = await scrapeRes.text()
-    const isLive = html.includes('"isLive":true') || html.includes('hqdefault_live.jpg')
+    if (!scrapeFoundLive) return []
 
-    if (!isLive) return []
-
-    // Tier 2: Search API to find ALL live streams (handles multiple concurrent broadcasts)
+    // Scraping says live but RSS check didn't find it — try Search API
+    // ── Tier 3: Search API (100 units) to find ALL live streams ──
     if (!API_KEY) return []
 
     const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${API_KEY}`
     const searchRes = await fetch(searchUrl, { next: { revalidate: CACHE_LIVE } })
 
-    if (!searchRes.ok) return []
+    if (!searchRes.ok) {
+      console.warn('[Live] Tier 3 (Search API) failed:', searchRes.status)
+      return []
+    }
 
     const searchData = await searchRes.json()
     const searchItems = searchData.items || []
 
     if (searchItems.length === 0) return []
 
-    // Tier 3: Get details for all found live streams (1 unit, up to 50 IDs)
+    // ── Tier 4: Get details for all found live streams (1 unit) ──
     const videoIds = searchItems.map((item: { id: { videoId: string } }) => item.id.videoId)
-    const detailUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoIds.join(',')}&key=${API_KEY}`
-    const detailRes = await fetch(detailUrl, { next: { revalidate: CACHE_LIVE_DETAILS } })
-
-    if (!detailRes.ok) return []
-
-    const detailData = await detailRes.json()
-    const details = detailData.items || []
-
-    // Filter to confirmed live streams on OUR channel
-    return details
-      .filter((detail: { snippet: { liveBroadcastContent: string; channelId: string } }) =>
-        detail.snippet.liveBroadcastContent === 'live' && detail.snippet.channelId === CHANNEL_ID
-      )
-      .map((detail: {
-        id: string
-        snippet: {
-          title: string
-          description: string
-          thumbnails: { high?: { url: string }; medium?: { url: string } }
-        }
-        liveStreamingDetails?: { concurrentViewers?: string }
-      }) => ({
-        id: detail.id,
-        title: detail.snippet.title,
-        description: detail.snippet.description,
-        thumbnail: detail.snippet.thumbnails.high?.url || detail.snippet.thumbnails.medium?.url || '',
-        concurrentViewers: detail.liveStreamingDetails?.concurrentViewers || '0',
-      }))
+    return await fetchLiveStreamDetails(videoIds)
   } catch (error) {
     console.error('YouTube live check error:', error)
     return []
@@ -342,44 +332,81 @@ export async function getLiveStreams(): Promise<YouTubeLiveStream[]> {
 }
 
 /**
- * Convenience wrapper — returns first live stream or null.
- * Used by components that only need to know "is anything live?"
+ * Detect live streams via RSS feed + videos.list API.
+ * Cost: 1 API unit (videos.list for up to 15 IDs).
+ * This works from ANY server — no scraping, no IP blocking issues.
  */
-export async function getLiveStream(): Promise<YouTubeLiveStream | null> {
-  const streams = await getLiveStreams()
-  return streams[0] ?? null
-}
-
-/**
- * Fallback: Use YouTube Search API to find ALL live streams.
- * Cost: 100 units — only call when Sheets confirms we're live but scraping failed.
- * This handles cloud environments where YouTube blocks scraping.
- */
-export async function getLiveStreamsViaSearch(): Promise<YouTubeLiveStream[]> {
+async function detectLiveViaRSS(): Promise<YouTubeLiveStream[]> {
   if (!API_KEY || !CHANNEL_ID) return []
 
   try {
-    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${API_KEY}`
-    const searchRes = await fetch(searchUrl, { next: { revalidate: CACHE_LIVE } })
+    // Step 1: Get recent video IDs from free RSS feed
+    const rssVideos = await getVideosFromRSS()
+    if (rssVideos.length === 0) return []
 
-    if (!searchRes.ok) return []
+    // Step 2: Check liveBroadcastContent via videos.list (1 unit for all IDs)
+    const ids = rssVideos.map((v) => v.id).join(',')
+    const url = `${BASE_URL}/videos?part=snippet,liveStreamingDetails&id=${ids}&key=${API_KEY}`
+    const res = await fetch(url, { next: { revalidate: CACHE_LIVE } })
 
-    const searchData = await searchRes.json()
-    const searchItems = searchData.items || []
+    if (!res.ok) {
+      console.warn('[Live] RSS videos.list check failed:', res.status)
+      return []
+    }
 
-    if (searchItems.length === 0) return []
+    const data = await res.json()
+    const items = data.items || []
 
-    // Get live details for all found streams (1 unit)
-    const videoIds = searchItems.map((item: { id: { videoId: string } }) => item.id.videoId)
-    const detailUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoIds.join(',')}&key=${API_KEY}`
-    const detailRes = await fetch(detailUrl, { next: { revalidate: CACHE_LIVE_DETAILS } })
+    // Step 3: Filter to currently live streams
+    const liveItems = items.filter(
+      (item: { snippet: { liveBroadcastContent: string } }) =>
+        item.snippet.liveBroadcastContent === 'live'
+    )
 
-    if (!detailRes.ok) return []
+    if (liveItems.length === 0) return []
 
-    const detailData = await detailRes.json()
-    const details = detailData.items || []
+    // Step 4: Map to YouTubeLiveStream format
+    return liveItems.map((item: {
+      id: string
+      snippet: {
+        title: string
+        description: string
+        thumbnails: { high?: { url: string }; medium?: { url: string } }
+      }
+      liveStreamingDetails?: { concurrentViewers?: string }
+    }) => ({
+      id: item.id,
+      title: item.snippet.title,
+      description: item.snippet.description,
+      thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || '',
+      concurrentViewers: item.liveStreamingDetails?.concurrentViewers || '0',
+    }))
+  } catch (error) {
+    console.error('[Live] RSS-based detection error:', error)
+    return []
+  }
+}
 
-    return details.map((detail: {
+/**
+ * Fetch live stream details for given video IDs.
+ * Cost: 1 API unit. Shared by multiple detection tiers.
+ */
+async function fetchLiveStreamDetails(videoIds: string[]): Promise<YouTubeLiveStream[]> {
+  if (!API_KEY || videoIds.length === 0) return []
+
+  const detailUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoIds.join(',')}&key=${API_KEY}`
+  const detailRes = await fetch(detailUrl, { next: { revalidate: CACHE_LIVE_DETAILS } })
+
+  if (!detailRes.ok) return []
+
+  const detailData = await detailRes.json()
+  const details = detailData.items || []
+
+  return details
+    .filter((detail: { snippet: { liveBroadcastContent: string; channelId: string } }) =>
+      detail.snippet.liveBroadcastContent === 'live' && detail.snippet.channelId === CHANNEL_ID
+    )
+    .map((detail: {
       id: string
       snippet: {
         title: string
@@ -394,8 +421,47 @@ export async function getLiveStreamsViaSearch(): Promise<YouTubeLiveStream[]> {
       thumbnail: detail.snippet.thumbnails.high?.url || detail.snippet.thumbnails.medium?.url || '',
       concurrentViewers: detail.liveStreamingDetails?.concurrentViewers || '0',
     }))
+}
+
+/**
+ * Convenience wrapper — returns first live stream or null.
+ * Used by components that only need to know "is anything live?"
+ */
+export async function getLiveStream(): Promise<YouTubeLiveStream | null> {
+  const streams = await getLiveStreams()
+  return streams[0] ?? null
+}
+
+/**
+ * Fallback: Use YouTube Search API to find ALL live streams.
+ * Cost: 100 units — only call when primary detection fails but Sheets confirms live.
+ * This handles edge cases where streams aren't in RSS yet.
+ */
+export async function getLiveStreamsViaSearch(): Promise<YouTubeLiveStream[]> {
+  if (!API_KEY || !CHANNEL_ID) return []
+
+  try {
+    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${API_KEY}`
+    const searchRes = await fetch(searchUrl, { next: { revalidate: CACHE_LIVE } })
+
+    if (!searchRes.ok) {
+      console.warn('[Live] Search API fallback failed:', searchRes.status)
+      return []
+    }
+
+    const searchData = await searchRes.json()
+    const searchItems = searchData.items || []
+
+    if (searchItems.length === 0) {
+      console.log('[Live] Search API found no live streams')
+      return []
+    }
+
+    // Get live details for all found streams (1 unit)
+    const videoIds = searchItems.map((item: { id: { videoId: string } }) => item.id.videoId)
+    return await fetchLiveStreamDetails(videoIds)
   } catch (error) {
-    console.error('YouTube search API live check error:', error)
+    console.error('[Live] Search API fallback error:', error)
     return []
   }
 }
