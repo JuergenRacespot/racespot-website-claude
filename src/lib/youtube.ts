@@ -16,6 +16,10 @@ const API_KEY = process.env.YOUTUBE_API_KEY
 const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID
 const BASE_URL = 'https://www.googleapis.com/youtube/v3'
 
+// Separate API key for live detection — uses its own quota so live detection
+// works even when the main API key's quota is exhausted.
+const LIVE_API_KEY = process.env.YOUTUBE_LIVE_API_KEY || API_KEY
+
 // ─── Cache durations ────────────────────────────────────────
 const CACHE_24H = 86400       // 24 hours — playlists, video details
 const CACHE_1H = 3600         // 1 hour — latest videos, broadcasts
@@ -307,9 +311,10 @@ export async function getLiveStreams(): Promise<YouTubeLiveStream[]> {
 
     // Scraping says live but RSS check didn't find it — try Search API
     // ── Tier 3: Search API (100 units) to find ALL live streams ──
-    if (!API_KEY) return []
+    // Uses LIVE_API_KEY — separate quota from main API key
+    if (!LIVE_API_KEY) return []
 
-    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${API_KEY}`
+    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${LIVE_API_KEY}`
     const searchRes = await fetch(searchUrl, { next: { revalidate: CACHE_LIVE } })
 
     if (!searchRes.ok) {
@@ -337,7 +342,7 @@ export async function getLiveStreams(): Promise<YouTubeLiveStream[]> {
  * This works from ANY server — no scraping, no IP blocking issues.
  */
 async function detectLiveViaRSS(): Promise<YouTubeLiveStream[]> {
-  if (!API_KEY || !CHANNEL_ID) return []
+  if (!LIVE_API_KEY || !CHANNEL_ID) return []
 
   try {
     // Step 1: Get recent video IDs from free RSS feed
@@ -345,8 +350,9 @@ async function detectLiveViaRSS(): Promise<YouTubeLiveStream[]> {
     if (rssVideos.length === 0) return []
 
     // Step 2: Check liveBroadcastContent via videos.list (1 unit for all IDs)
+    // Uses LIVE_API_KEY — separate quota from main API key
     const ids = rssVideos.map((v) => v.id).join(',')
-    const url = `${BASE_URL}/videos?part=snippet,liveStreamingDetails&id=${ids}&key=${API_KEY}`
+    const url = `${BASE_URL}/videos?part=snippet,liveStreamingDetails&id=${ids}&key=${LIVE_API_KEY}`
     const res = await fetch(url, { next: { revalidate: CACHE_LIVE } })
 
     if (!res.ok) {
@@ -392,9 +398,10 @@ async function detectLiveViaRSS(): Promise<YouTubeLiveStream[]> {
  * Cost: 1 API unit. Shared by multiple detection tiers.
  */
 async function fetchLiveStreamDetails(videoIds: string[]): Promise<YouTubeLiveStream[]> {
-  if (!API_KEY || videoIds.length === 0) return []
+  if (!LIVE_API_KEY || videoIds.length === 0) return []
 
-  const detailUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoIds.join(',')}&key=${API_KEY}`
+  // Uses LIVE_API_KEY — separate quota from main API key
+  const detailUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoIds.join(',')}&key=${LIVE_API_KEY}`
   const detailRes = await fetch(detailUrl, { next: { revalidate: CACHE_LIVE_DETAILS } })
 
   if (!detailRes.ok) return []
@@ -438,10 +445,11 @@ export async function getLiveStream(): Promise<YouTubeLiveStream | null> {
  * This handles edge cases where streams aren't in RSS yet.
  */
 export async function getLiveStreamsViaSearch(): Promise<YouTubeLiveStream[]> {
-  if (!API_KEY || !CHANNEL_ID) return []
+  if (!LIVE_API_KEY || !CHANNEL_ID) return []
 
   try {
-    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${API_KEY}`
+    // Uses LIVE_API_KEY — separate quota from main API key
+    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${LIVE_API_KEY}`
     const searchRes = await fetch(searchUrl, { next: { revalidate: CACHE_LIVE } })
 
     if (!searchRes.ok) {
