@@ -1,7 +1,6 @@
 import { Ticker } from './Ticker'
 import type { TickerItem } from './Ticker'
 import { getUpcomingEvents } from '@/lib/sheets'
-import { getLiveStreams, formatViewCount } from '@/lib/youtube'
 
 /** Fallback items when no data is available */
 const FALLBACK_ITEMS: TickerItem[] = [
@@ -12,33 +11,16 @@ const FALLBACK_ITEMS: TickerItem[] = [
 
 export async function TickerServer() {
   const tickerItems: TickerItem[] = []
-  let isLive = false
 
   try {
-    // Fetch live streams from YouTube
-    const [liveStreams, events] = await Promise.all([
-      getLiveStreams(),
-      getUpcomingEvents(5),
-    ])
+    const events = await getUpcomingEvents(5)
 
-    // Determine live status
+    // Add live event titles from Sheets
     const liveEvents = events.filter(e => e.isLive)
-    isLive = liveStreams.length > 0 || liveEvents.length > 0
-
-    // Add ALL live stream titles to ticker
-    if (liveStreams.length > 0) {
-      for (const stream of liveStreams) {
-        const viewers = formatViewCount(stream.concurrentViewers)
-        tickerItems.push({
-          label: `${stream.title} — ${viewers} Watching`,
-        })
-      }
-    } else if (liveEvents.length > 0) {
-      for (const event of liveEvents) {
-        tickerItems.push({
-          label: `${event.series}${event.description ? ` — ${event.description}` : ''}`,
-        })
-      }
+    for (const event of liveEvents) {
+      tickerItems.push({
+        label: `${event.series}${event.description ? ` — ${event.description}` : ''}`,
+      })
     }
 
     // Add upcoming events — pass ISO date so Ticker can format in user's local timezone
@@ -56,5 +38,5 @@ export async function TickerServer() {
   // Use fallback if no items generated
   const items = tickerItems.length > 0 ? tickerItems : FALLBACK_ITEMS
 
-  return <Ticker items={items} isLive={isLive} />
+  return <Ticker items={items} />
 }

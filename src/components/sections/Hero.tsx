@@ -2,17 +2,18 @@
 
 import Link from 'next/link'
 import { useTranslation } from '@/lib/language'
+import { useLiveStatus } from '@/components/layout/LiveStatusProvider'
 
 interface HeroProps {
-  isLive?: boolean
-  liveTitles?: string[]
   nextEventSeries?: string
   nextEventDateISO?: string
 }
 
-export function Hero({ isLive = false, liveTitles = [], nextEventSeries, nextEventDateISO }: HeroProps) {
+export function Hero({ nextEventSeries, nextEventDateISO }: HeroProps) {
   const t = useTranslation()
+  const { liveStreams, isLive } = useLiveStatus()
 
+  const liveTitles = liveStreams.map(s => s.title)
   const hasMultipleStreams = liveTitles.length > 1
   const singleTitle = liveTitles.length === 1 ? liveTitles[0] : null
 

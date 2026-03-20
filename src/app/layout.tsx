@@ -5,8 +5,7 @@ import { Header } from '@/components/layout/Header'
 import { TickerServer } from '@/components/layout/TickerServer'
 import { Footer } from '@/components/layout/Footer'
 import { LanguageProvider } from '@/lib/language'
-import { getLiveStreams, getLiveStreamsViaSearch } from '@/lib/youtube'
-import { getUpcomingEvents } from '@/lib/sheets'
+import { LiveStatusProvider } from '@/components/layout/LiveStatusProvider'
 import { OrganizationJsonLd, WebsiteJsonLd } from '@/components/seo/JsonLd'
 
 const inter = Inter({
@@ -64,22 +63,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://racespot.tv'),
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [liveStreams, events] = await Promise.all([
-    getLiveStreams(),
-    getUpcomingEvents(3),
-  ])
-
-  // Check if live via scraping or via Sheets calendar
-  const liveEvents = events.filter((e) => e.isLive)
-  let liveCount = liveStreams.length > 0 ? liveStreams.length : liveEvents.length
-
-  // If Sheets says live but scraping failed, try Search API to confirm
-  if (liveStreams.length === 0 && liveEvents.length > 0) {
-    const searchResults = await getLiveStreamsViaSearch()
-    liveCount = searchResults.length > 0 ? searchResults.length : liveEvents.length
-  }
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${oswald.variable}`} suppressHydrationWarning>
       <head>
@@ -88,11 +72,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="bg-rs-black text-white" suppressHydrationWarning>
         <LanguageProvider>
-          <Header liveCount={liveCount} />
-          <TickerServer />
-          {/* Offset for fixed header (64px) + ticker (34px) = 98px */}
-          <main className="pt-[98px]">{children}</main>
-          <Footer />
+          <LiveStatusProvider>
+            <Header />
+            <TickerServer />
+            {/* Offset for fixed header (64px) + ticker (34px) = 98px */}
+            <main className="pt-[98px]">{children}</main>
+            <Footer />
+          </LiveStatusProvider>
         </LanguageProvider>
       </body>
     </html>

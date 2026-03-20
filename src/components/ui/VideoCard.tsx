@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { formatViewCount, formatDate, type YouTubeVideo } from '@/lib/youtube'
+import { formatViewCount, formatDate, type YouTubeVideo } from '@/lib/youtube-utils'
 
 interface VideoCardProps {
   video: YouTubeVideo

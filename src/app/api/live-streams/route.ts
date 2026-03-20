@@ -20,9 +20,13 @@ export async function GET() {
       getUpcomingEvents(3),
     ])
 
+    const headers = {
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+    }
+
     // Primary detection found streams — return them
     if (liveStreams.length > 0) {
-      return Response.json({ streams: liveStreams })
+      return Response.json({ streams: liveStreams }, { headers })
     }
 
     // Fallback: Sheets says we should be live but primary detection failed.
@@ -31,10 +35,10 @@ export async function GET() {
     if (liveEvents.length > 0) {
       console.log('[Live API] Primary detection empty but Sheets shows live event — trying Search API')
       const searchResults = await getLiveStreamsViaSearch()
-      return Response.json({ streams: searchResults })
+      return Response.json({ streams: searchResults }, { headers })
     }
 
-    return Response.json({ streams: [] })
+    return Response.json({ streams: [] }, { headers })
   } catch (error) {
     console.error('Live streams API error:', error)
     return Response.json({ streams: [] })

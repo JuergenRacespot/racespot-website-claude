@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getLiveStreams, getLiveStreamsViaSearch } from '@/lib/youtube'
+import { getLiveStreams } from '@/lib/youtube'
 import { getUpcomingEvents } from '@/lib/sheets'
 import { LiveEmbed } from '@/components/sections/LiveEmbed'
 import { LiveOffline } from '@/components/sections/LiveOffline'
@@ -40,18 +40,9 @@ export default async function LivePage() {
       tier: e.tier,
     }))
 
-  // Primary detection (RSS+videos.list → scraping → Search API) found streams
+  // Primary detection (RSS+videos.list → scraping) found streams
   if (liveStreams.length > 0) {
     return <LiveEmbed liveStreams={liveStreams} upcomingEvents={upcomingEvents} />
-  }
-
-  // Fallback: Sheets says we should be live but primary detection failed.
-  // Try Search API as last resort (handles newly created streams not yet in RSS).
-  if (liveEvents.length > 0) {
-    const searchResults = await getLiveStreamsViaSearch()
-    if (searchResults.length > 0) {
-      return <LiveEmbed liveStreams={searchResults} upcomingEvents={upcomingEvents} />
-    }
   }
 
   const nextEvent = upcomingEvents.length > 0 ? upcomingEvents[0] : null

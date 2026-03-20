@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import type { YouTubeLiveStream } from '@/lib/youtube'
-import { formatViewCount } from '@/lib/youtube'
+import type { YouTubeLiveStream } from '@/lib/youtube-utils'
+import { formatViewCount } from '@/lib/youtube-utils'
 import { useTranslation } from '@/lib/language'
 
 interface SerializedEvent {
@@ -18,7 +18,7 @@ interface LiveEmbedProps {
   upcomingEvents?: SerializedEvent[]
 }
 
-const POLL_INTERVAL = 30_000 // 30 seconds
+const POLL_INTERVAL = 60_000 // 60 seconds
 
 export function LiveEmbed({ liveStreams: initialStreams, upcomingEvents = [] }: LiveEmbedProps) {
   const t = useTranslation()

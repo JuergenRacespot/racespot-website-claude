@@ -2,6 +2,8 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useLiveStatus } from '@/components/layout/LiveStatusProvider'
+import { formatViewCount } from '@/lib/youtube-utils'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -14,7 +16,6 @@ export interface TickerItem {
 
 interface TickerProps {
   items: TickerItem[]
-  isLive: boolean
 }
 
 // ─── Locale-aware helpers (same logic as CalendarClient) ────
@@ -65,29 +66,34 @@ function formatLocalDate(iso: string): string {
 
 // ─── Component ──────────────────────────────────────────────
 
-export function Ticker({ items = [], isLive }: TickerProps) {
+export function Ticker({ items = [] }: TickerProps) {
   const is24h = useIs24Hour()
   const [mounted, setMounted] = useState(false)
+  const { liveStreams, isLive } = useLiveStatus()
 
   useEffect(() => { setMounted(true) }, [])
 
   const rendered = useMemo(() => {
-    if (!items || items.length === 0) return []
+    // Prepend live stream titles from client-side polling
+    const liveItems: string[] = liveStreams.map(stream => {
+      const viewers = formatViewCount(stream.concurrentViewers)
+      return `${stream.title} — ${viewers} Watching`
+    })
 
-    return items.map(item => {
+    const serverItems = (!items || items.length === 0) ? [] : items.map(item => {
       if (item.dateISO) {
         if (!mounted) {
-          // Server / pre-hydration: use simple ISO-derived label to avoid mismatch
           return item.label
         }
-        // Client after hydration: full localised date + time
         const dateStr = formatLocalDate(item.dateISO)
         const timeStr = formatLocalTime(item.dateISO, is24h)
         return `${item.label} — ${dateStr} · ${timeStr}`
       }
       return item.label
     })
-  }, [items, is24h, mounted])
+
+    return liveItems.length > 0 ? [...liveItems, ...serverItems] : serverItems
+  }, [items, is24h, mounted, liveStreams])
 
   if (rendered.length === 0) return null
 

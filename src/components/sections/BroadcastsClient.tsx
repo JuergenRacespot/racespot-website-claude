@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import type { YouTubePlaylist } from '@/lib/youtube'
+import type { YouTubePlaylist } from '@/lib/youtube-utils'
 import { useTranslation } from '@/lib/language'
 
 // ─── Types ──────────────────────────────────────────────────

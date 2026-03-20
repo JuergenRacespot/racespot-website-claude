@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useLanguage, useTranslation, LANGUAGES } from '@/lib/language'
+import { useLiveStatus } from '@/components/layout/LiveStatusProvider'
 import type { TranslationKey } from '@/lib/i18n/translations'
 
 const NAV_LINKS: { href: string; labelKey: TranslationKey; isLiveLink?: boolean }[] = [
@@ -16,12 +17,8 @@ const NAV_LINKS: { href: string; labelKey: TranslationKey; isLiveLink?: boolean 
   { href: '/live',       labelKey: 'nav.live', isLiveLink: true },
 ]
 
-interface HeaderProps {
-  liveCount?: number
-}
-
-export function Header({ liveCount = 0 }: HeaderProps) {
-  const isLive = liveCount > 0
+export function Header() {
+  const { liveCount, isLive } = useLiveStatus()
   const [menuOpen, setMenuOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
   const langRef = useRef<HTMLDivElement>(null)
