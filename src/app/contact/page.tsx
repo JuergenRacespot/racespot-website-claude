@@ -1,12 +1,15 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, useRef, type FormEvent } from 'react'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { useTranslation } from '@/lib/language'
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
   const t = useTranslation()
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -22,6 +25,8 @@ export default function ContactPage() {
       email: data.get('email') as string,
       subject: data.get('subject') as string,
       message: data.get('message') as string,
+      company: data.get('company') as string, // honeypot
+      'cf-turnstile-response': turnstileToken,
     }
 
     try {
@@ -44,6 +49,7 @@ export default function ContactPage() {
       }
 
       setSubmitted(true)
+      turnstileRef.current?.reset()
     } catch (err) {
       setError(
         err instanceof Error
@@ -189,6 +195,30 @@ export default function ContactPage() {
                     placeholder={t('contact.messagePlaceholder')}
                   />
                 </div>
+
+                {/* Honeypot — hidden from real users, bots fill it out */}
+                <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+                  <label htmlFor="company">Company</label>
+                  <input
+                    type="text"
+                    id="company"
+                    name="company"
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                </div>
+
+                {/* Cloudflare Turnstile */}
+                {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                    onSuccess={setTurnstileToken}
+                    onError={() => setTurnstileToken(null)}
+                    onExpire={() => setTurnstileToken(null)}
+                    options={{ theme: 'dark' }}
+                  />
+                )}
 
                 {error && (
                   <div className="rounded-rs border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">

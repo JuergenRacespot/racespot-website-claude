@@ -38,6 +38,44 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { name, email, subject, message } = body
 
+    // Honeypot check — bots fill this hidden field, real users don't
+    if (body.company) {
+      // Return success so the bot doesn't know it was caught
+      return NextResponse.json({ success: true, method: 'smtp' })
+    }
+
+    // Turnstile verification
+    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
+    if (turnstileSecret) {
+      const turnstileToken = body['cf-turnstile-response']
+      if (!turnstileToken) {
+        return NextResponse.json(
+          { error: 'Please complete the security check.' },
+          { status: 400 }
+        )
+      }
+
+      const verifyRes = await fetch(
+        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            secret: turnstileSecret,
+            response: turnstileToken,
+            remoteip: ip,
+          }),
+        }
+      )
+      const verifyData = await verifyRes.json()
+      if (!verifyData.success) {
+        return NextResponse.json(
+          { error: 'Security verification failed. Please try again.' },
+          { status: 403 }
+        )
+      }
+    }
+
     // Validation
     if (!name || !email || !message) {
       return NextResponse.json(
