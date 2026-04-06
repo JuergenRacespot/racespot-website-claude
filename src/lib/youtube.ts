@@ -284,10 +284,16 @@ export async function getLiveStreams(): Promise<YouTubeLiveStream[]> {
     // Scraping says live but RSS check didn't find it — try Search API
     // ── Tier 3: Search API (100 units) to find ALL live streams ──
     // Uses LIVE_API_KEY — separate quota from main API key
-    if (!LIVE_API_KEY) return []
+    if (!LIVE_API_KEY && !API_KEY) return []
 
-    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${LIVE_API_KEY}`
-    const searchRes = await fetch(searchUrl, { next: { revalidate: CACHE_LIVE } })
+    const tier3BaseUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10`
+    let searchRes = await fetch(`${tier3BaseUrl}&key=${LIVE_API_KEY || API_KEY}`, { next: { revalidate: CACHE_LIVE } })
+
+    // Fallback to main API key if live key quota is exhausted
+    if (!searchRes.ok && API_KEY && API_KEY !== LIVE_API_KEY) {
+      console.warn(`[Live] Tier 3 LIVE_API_KEY failed (${searchRes.status}), falling back to main API_KEY`)
+      searchRes = await fetch(`${tier3BaseUrl}&key=${API_KEY}`, { next: { revalidate: CACHE_LIVE } })
+    }
 
     if (!searchRes.ok) {
       console.warn('[Live] Tier 3 (Search API) failed:', searchRes.status)
@@ -328,8 +334,14 @@ async function detectLiveViaRSS(): Promise<YouTubeLiveStream[]> {
     // Step 2: Check liveBroadcastContent via videos.list (1 unit for all IDs)
     // Uses LIVE_API_KEY — separate quota from main API key
     const ids = rssVideos.map((v) => v.id).join(',')
-    const url = `${BASE_URL}/videos?part=snippet,liveStreamingDetails&id=${ids}&key=${LIVE_API_KEY}`
-    const res = await fetch(url, { next: { revalidate: CACHE_LIVE } })
+    const baseUrl = `${BASE_URL}/videos?part=snippet,liveStreamingDetails&id=${ids}`
+    let res = await fetch(`${baseUrl}&key=${LIVE_API_KEY}`, { next: { revalidate: CACHE_LIVE } })
+
+    // Fallback to main API key if live key quota is exhausted
+    if (!res.ok && API_KEY && API_KEY !== LIVE_API_KEY) {
+      console.warn(`[Live] LIVE_API_KEY failed (${res.status}), falling back to main API_KEY`)
+      res = await fetch(`${baseUrl}&key=${API_KEY}`, { next: { revalidate: CACHE_LIVE } })
+    }
 
     if (!res.ok) {
       console.warn(`[Live] RSS videos.list check failed: ${res.status} ${res.statusText}`)
@@ -381,8 +393,14 @@ async function fetchLiveStreamDetails(videoIds: string[]): Promise<YouTubeLiveSt
   if (!LIVE_API_KEY || videoIds.length === 0) return []
 
   // Uses LIVE_API_KEY — separate quota from main API key
-  const detailUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoIds.join(',')}&key=${LIVE_API_KEY}`
-  const detailRes = await fetch(detailUrl, { next: { revalidate: CACHE_LIVE_DETAILS } })
+  const detailBaseUrl = `${BASE_URL}/videos?part=liveStreamingDetails,snippet&id=${videoIds.join(',')}`
+  let detailRes = await fetch(`${detailBaseUrl}&key=${LIVE_API_KEY}`, { next: { revalidate: CACHE_LIVE_DETAILS } })
+
+  // Fallback to main API key if live key quota is exhausted
+  if (!detailRes.ok && API_KEY && API_KEY !== LIVE_API_KEY) {
+    console.warn(`[Live] LIVE_API_KEY failed in fetchLiveStreamDetails (${detailRes.status}), falling back to main API_KEY`)
+    detailRes = await fetch(`${detailBaseUrl}&key=${API_KEY}`, { next: { revalidate: CACHE_LIVE_DETAILS } })
+  }
 
   if (!detailRes.ok) return []
 
@@ -429,8 +447,14 @@ export async function getLiveStreamsViaSearch(): Promise<YouTubeLiveStream[]> {
 
   try {
     // Uses LIVE_API_KEY — separate quota from main API key
-    const searchUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10&key=${LIVE_API_KEY}`
-    const searchRes = await fetch(searchUrl, { next: { revalidate: CACHE_LIVE } })
+    const searchBaseUrl = `${BASE_URL}/search?part=snippet&channelId=${CHANNEL_ID}&eventType=live&type=video&maxResults=10`
+    let searchRes = await fetch(`${searchBaseUrl}&key=${LIVE_API_KEY}`, { next: { revalidate: CACHE_LIVE } })
+
+    // Fallback to main API key if live key quota is exhausted
+    if (!searchRes.ok && API_KEY && API_KEY !== LIVE_API_KEY) {
+      console.warn(`[Live] LIVE_API_KEY failed in getLiveStreamsViaSearch (${searchRes.status}), falling back to main API_KEY`)
+      searchRes = await fetch(`${searchBaseUrl}&key=${API_KEY}`, { next: { revalidate: CACHE_LIVE } })
+    }
 
     if (!searchRes.ok) {
       console.warn('[Live] Search API fallback failed:', searchRes.status)
